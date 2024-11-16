@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="Test Mutli-joint arm", group="Linear OpMode")
+@TeleOp(name="Andres' arm example teleop", group="Linear OpMode")
 
-public class AndesArmTeleop extends LinearOpMode{
+public class AndresArmTeleop extends LinearOpMode{
     //declare variables
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -20,19 +20,31 @@ public class AndesArmTeleop extends LinearOpMode{
          runtime.reset();
 
          while (opModeIsActive()){
-             //use operator controls to move arm
+             // use operator controls to move arm
              double wrist = gamepad2.left_stick_x;
              double twist = gamepad2.right_stick_x;
 
-             //operator control to close fingers
+             // operator control to close fingers
              boolean closeFingers = gamepad2.right_bumper;
 
-             //make -1 -> 0 and 1 -> 1
-             double wristServoPosition = wristSubsystem.calculateWristPosition(wrist);
-             double twistServoPosition = wristSubsystem.calculateTwistPosition(twist);
+             // operator control to move wrist to preset positions:
+             boolean upPreset = gamepad2.dpad_up;
+             boolean downPreset = gamepad2.dpad_down;
 
-             //move wrist to the position
-             wristSubsystem.moveTo(wristServoPosition, twistServoPosition);
+             // move to preset, if applicable
+             if (upPreset){
+                 wristSubsystem.wristUp();
+             }
+
+             if (downPreset){
+                 wristSubsystem.wristNormal();
+             }
+
+             // for the twist value, the range must be modified
+             double twistServoPosition = wristSubsystem.joystickToRange(twist);
+
+             // move wrist to the position
+             wristSubsystem.move(wrist, twistServoPosition);
 
              if (closeFingers){
                  wristSubsystem.close();
@@ -41,7 +53,7 @@ public class AndesArmTeleop extends LinearOpMode{
                  wristSubsystem.open();
              }
 
-            //update telemetry
+             // update telemetry
              telemetry.update();
          }
     }
