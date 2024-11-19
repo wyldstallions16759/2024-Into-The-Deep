@@ -6,12 +6,14 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.MM;
+import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.mmPerInch;
 
 public class Pinpoint {
 
     // Odometry pods x and y offsets - MUST BE FILLED IN
-    final double XOFFSET = 0;
-    final double YOFFSET = 0;
+    final static double XOFFSET = mmPerInch * 5.2;
+    final static double YOFFSET = mmPerInch * 5.6;
+
 
     private GoBildaPinpointDriver odo;
     private DriveToPoint nav;
@@ -28,7 +30,7 @@ public class Pinpoint {
         nav.setYawCoefficients(2, 0.5, 2.0, DEGREES, 2);
     }
 
-    private void initPinpoint(HardwareMap hwMap) {
+    public void initPinpoint(HardwareMap hwMap) {
         odo = hwMap.get(GoBildaPinpointDriver.class, "odo");
         odo.setOffsets(XOFFSET, YOFFSET);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
@@ -37,7 +39,17 @@ public class Pinpoint {
         odo.resetPosAndIMU();
     }
 
-    public boolean driveTo(Pose2D currentPosition, Pose2D targetPosition, double power, double holdTime) {
-        return nav.driveTo(currentPosition, targetPosition, power, holdTime);
+    public boolean driveTo(Pose2D targetPosition, double power, double holdTime) {
+        return nav.driveTo(odo.getPosition(), targetPosition, power, holdTime);
+
+    }
+    public Pose2D CurrentPosition() {
+        return odo.getPosition();
+    }
+    public double getXpos() {
+        return odo.getEncoderX();
+    }
+    public double getYpos() {
+        return odo.getEncoderY();
     }
 }
