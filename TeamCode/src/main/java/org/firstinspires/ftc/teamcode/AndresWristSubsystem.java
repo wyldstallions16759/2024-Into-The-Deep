@@ -11,13 +11,13 @@ public class AndresWristSubsystem {
     // important constants for servo positions:
 
     public final double WRIST_NORMAL_POSITION = 10.0/13;
-    public final double WRIST_UP_POSITION = 2.0/15;
+    public final double WRIST_UP_POSITION = 0;
 
     // WRIST_ROTATE_DIVISOR
     // when rotating the wrist, the wristPosition variable is
     // incremented or decremented by the joystick position divided by this value.
     // MUST BE CALIBRATED
-    public final int WRIST_ROTATE_DIVISOR = 5;
+    public final int WRIST_ROTATE_DIVISOR = 500;
     public final double TWIST_NORMAL_POSITION = 0.5;
 
 
@@ -56,19 +56,28 @@ public class AndresWristSubsystem {
         base.scaleRange(2.0/15,1);
         // BASE range should be [2/15, 1]. 0.8 is a "normal" position, facing straight down.
         // going past 0.8 is possible, but only a little bit (because of how the servo range lined up)
-        // 2/15 is a secondary "normal" position, facing straight up.
+        // 0.0 is a secondary "normal" position, facing straight up.
         // an input of 10.0/13 (0.76923076923) should give the "normal" position.
 
-        // NOTE: must be 2.0/15 because integer division (2/15) would return 0
+        // NOTE: must be 10.0/13 because integer division (10/13) would return 0
 
-        twist.scaleRange(71.0/600,71.0/300);
+        twist.scaleRange(71.0/400,(71.0/300)+(71.0/2400));
         // TWIST range should be [71/600, 71/300]
         // this creates 180 degrees of motion. It is possible to enlarge this to allow for a full
         // rotation, because twist servo is a 5-turn servo and not limited to 300 degrees.
         // in between these two values is 71/400, which is a "normal" position. It faces forward.
         // an input of "0.5" will give the "normal" position.
 
-        claw.scaleRange(0.52,0.55); //this will need to be calibrated to the Servo's position.
+        // UPDATE: make 71.0/300 the 'normal' position
+        // keep 135deg range, Min: -45deg from normal
+        // Max: 90deg past normal
+        // if a range of (71/600) to (71/300)=142/600 is 180degrees, 180 degree range = 71/600
+        // 45 is 1/4 of 180. (71/2400)
+        //NORMAL should be 71/300. MAX should be (71/300) + (71/2400)
+        // MIN should be 71/400
+        // 71/300 is around 129/200 in the [0,1] range.
+
+        claw.scaleRange(0.53,0.55); //this will need to be calibrated to the Servo's position.
 
         // further initialize instance variables
 
@@ -92,6 +101,11 @@ public class AndresWristSubsystem {
         // its normal position is currently 0.5 (halfway between the two extremes). If a change
         // is made to allow it to have 270 degrees of rotation, a change will need to be made here to make it default to the new
         // default position.
+        // A CHANGE HAS BEEN MADE. It now must rotate 135 degrees with a base at 129/200
+
+        // Manipulate the twist range:
+        // Turn it into a range of [0, 529/400]
+        // or not...
 
         twist.setPosition(twistPosition);
 
@@ -115,12 +129,14 @@ public class AndresWristSubsystem {
 
             // increment wristPosition:
             this.wristPosition += wristIncrement;
-            // limit wristPosition to the range [0,1]
-            this.wristPosition = Math.min(1, Math.max(0, this.wristPosition));
-            // (in other words, pick the smaller of two numbers, 1 and (the larger of two numbers, 0 and wristPosition)
-            // assign the position
+            // make sure the wristPosition is within the range [0,1]
+            this.wristPosition = Math.max(0,Math.min(1,this.wristPosition));
+            // picks the smaller of (position) and 1, then the bigger one of the result.
+            // this forces it to be in the range [0,1]
+
             base.setPosition(this.wristPosition);
             // print to telemetry
+            telemetry.addData("Wrist Position: ",this.wristPosition);
             telemetry.addData("Wrist Change:", wristIncrement);
         }
 
