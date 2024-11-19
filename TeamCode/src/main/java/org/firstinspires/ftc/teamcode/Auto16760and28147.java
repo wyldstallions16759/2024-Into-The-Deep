@@ -28,7 +28,7 @@ public class Auto16760and28147 extends LinearOpMode {
     }
 
     //set a bunch of places to go
-    static final Pose2D TARGET = new Pose2D(DistanceUnit.MM,50, 50, AngleUnit.DEGREES, 0);
+    static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 48, 13, AngleUnit.DEGREES, 90);
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, 48, 48, AngleUnit.DEGREES, 0);
     static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
 
@@ -39,8 +39,8 @@ public class Auto16760and28147 extends LinearOpMode {
 
         // Initialize Pinpoint and Arm
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
-
         ArmSubsystem arm = new ArmSubsystem(hardwareMap, telemetry);
+
         // Start state machine
         StateMachine stateMachine;
         stateMachine = StateMachine.WAITING_FOR_START;
@@ -48,21 +48,11 @@ public class Auto16760and28147 extends LinearOpMode {
         // Wait for the game to start (driver presses START)
         waitForStart();
         resetRuntime();
-        //l
 
         while (opModeIsActive()) {
+            //need to update odometry every time it loops
+            pinpoint.update();
 
-//            pinpoint.driveTo(TARGET, 0.3, 0);
-            boolean Job1 = true;
-            if (Job1) {
-                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
-            }
-
-            while (pinpoint.getXpos() <100000) {
-                telemetry.addData("X position:", pinpoint.getXpos());
-                telemetry.addData("Y position:", pinpoint.getYpos());
-                telemetry.update();
-            }
             //----------------------------------------------------------
             // State: WAITING_FOR_START
             //----------------------------------------------------------
@@ -79,17 +69,14 @@ public class Auto16760and28147 extends LinearOpMode {
             if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
                 // In parallel:
                 // (a) drive to front of SUBMERSIBLE
-//                pinpoint.driveTo(TARGET, 0.3, 5);
-//                pinpoint.driveTo(TARGET, 0.3, 5);
                 // (b) rotate arm to ARM_UP_MAX_POSITION
                 // (c) extend arm to EXT_MAX_POSITION
                 // When all three conditions met, move to next state (PLACE_SPECIMEN)
-
-                int x = 1;
-                if (x == 1) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
-                }
-
+                pinpoint.driveTo(TARGET,0.3,1);
+                Pose2D pose = pinpoint.getCurrentPosition();
+                telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
+                telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
+                telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
             }
 
             //----------------------------------------------------------
@@ -132,7 +119,7 @@ public class Auto16760and28147 extends LinearOpMode {
             if (stateMachine == StateMachine.END) {
 
             }
-
+            telemetry.update();
         }
     }
 }

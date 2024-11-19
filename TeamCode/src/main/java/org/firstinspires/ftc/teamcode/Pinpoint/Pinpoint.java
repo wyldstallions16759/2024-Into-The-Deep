@@ -34,8 +34,8 @@ public class Pinpoint {
         odo = hwMap.get(GoBildaPinpointDriver.class, "odo");
         odo.setOffsets(XOFFSET, YOFFSET);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
-                GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED,
+                GoBildaPinpointDriver.EncoderDirection.FORWARD);
         odo.resetPosAndIMU();
     }
 
@@ -43,9 +43,12 @@ public class Pinpoint {
         return nav.driveTo(odo.getPosition(), targetPosition, power, holdTime);
 
     }
-    public Pose2D CurrentPosition() {
+    public void update() {
+        odo.update();
+    }
+
+    public Pose2D getCurrentPosition() {
         return odo.getPosition();
-        //l
     }
     public double getXpos() {
         return odo.getEncoderX();
