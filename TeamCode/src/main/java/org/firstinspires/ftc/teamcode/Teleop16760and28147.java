@@ -251,7 +251,7 @@ public class Teleop16760and28147 extends LinearOpMode {
             telemetry.addData("Elevation Encoder: ", "%d", Elevation.getCurrentPosition());
             telemetry.addData("Extension Encoder: ", "%d", Extension.getCurrentPosition());
             telemetry.addData("Servo Position: ", "%4.2f", RightFinger.getPosition());
-            telemetry.addData("OdoX",());
+//            telemetry.addData("OdoX",());
             telemetry.addData("OdoY",pinpoint.getYpos());
             telemetry.update();
         }
