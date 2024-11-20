@@ -61,21 +61,15 @@ public class AndresWristSubsystem {
 
         // NOTE: must be 10.0/13 because integer division (10/13) would return 0
 
-        twist.scaleRange(71.0/400,(71.0/300)+(71.0/2400));
-        // TWIST range should be [71/600, 71/300]
-        // this creates 180 degrees of motion. It is possible to enlarge this to allow for a full
-        // rotation, because twist servo is a 5-turn servo and not limited to 300 degrees.
-        // in between these two values is 71/400, which is a "normal" position. It faces forward.
-        // an input of "0.5" will give the "normal" position.
+        twist.scaleRange(71.0/400,213.0/800);
 
-        // UPDATE: make 71.0/300 the 'normal' position
-        // keep 135deg range, Min: -45deg from normal
-        // Max: 90deg past normal
-        // if a range of (71/600) to (71/300)=142/600 is 180degrees, 180 degree range = 71/600
-        // 45 is 1/4 of 180. (71/2400)
-        //NORMAL should be 71/300. MAX should be (71/300) + (71/2400)
-        // MIN should be 71/400
-        // 71/300 is around 129/200 in the [0,1] range.
+        // TWIST range should be between [71/400, 213/800]
+        // This *should* give a range of 135 degrees.
+        // A normal position *should* be 129/200 of the range [71/400, 213/800]
+
+        // if this doesn't work, just revert the branch. I definitely should have commited when I had it working,
+        // but it's a little too late for that :/ Hopefully this will work.
+
 
         claw.scaleRange(0.53,0.55); //this will need to be calibrated to the Servo's position.
 
@@ -97,16 +91,39 @@ public class AndresWristSubsystem {
         // twist joint is NOT sticky. It will only hold its position as long as it is receiving
         // input from the twistPosition variable in this method.
 
-        // set the twist position. It will not have to have anything special because it will default back to its normal position.
-        // its normal position is currently 0.5 (halfway between the two extremes). If a change
-        // is made to allow it to have 270 degrees of rotation, a change will need to be made here to make it default to the new
-        // default position.
-        // A CHANGE HAS BEEN MADE. It now must rotate 135 degrees with a base at 129/200
 
         // Manipulate the twist range:
-        // Turn it into a range of [0, 529/400]
-        // or not...
+        // The wrist must be adjusted to allow for the new "normal" position at 129/200
+        // The movement will be linear for each side, but in order to have different distances on each
+        // side of the center, some will need to move faster.
 
+        // All inputs below 0.5 will be Case 1, and all inputs above or equal to 0.5 will be Case 2.
+        // Case 1 will be linear with other points in Case 1, but not with those in Case 2.
+
+        // If you want to switch the order of the controls, uncomment the line below:
+        // twistPosition = 1 - twistPosition;
+        // (I think that should work).
+
+        if (twistPosition < 0.5){
+            // Case 1:
+            // something must be MULTIPLIED because 0 remains equal to 0.
+            // However, 0.5 becomes 129/200
+            // to turn 0.5 into 129/200, you would multiply by (129/200)/0.5 = (129/200)/(1/2) = (129/200)*2 = 129/100.
+            twistPosition *= 129.0/100;
+        }
+        else{
+            // Case 2:
+            // first, we subtract 0.5 from twistPosition. Now, it is within a range [0, 0.5].
+            // 0.5 will become 1, and 0 will become 129/200. To do this, we multiply first by some scalar,
+            // and then add a constant to it. The constant added will be 129/200.
+            // (because 0k = 0, and then 0 must become 129/200.) The scalar will be
+            // the number that, when multiplied by 0.5, is equal to 1 - (129/200). That's 200/200 - 129/200 = 71/200.
+            // 0.5k = 71/200. Divide both sides by 0.5. k = (71/200)/(1/2) = 71/100.
+
+            twistPosition -= 0.5;
+            twistPosition *= 71.0/100;
+            twistPosition += 129.0/200;
+        }
         twist.setPosition(twistPosition);
 
         // wrist position will need to be incremented by some amount, and then assigned to the servo position.
