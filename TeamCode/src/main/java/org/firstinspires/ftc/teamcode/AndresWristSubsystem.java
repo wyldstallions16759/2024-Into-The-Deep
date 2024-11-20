@@ -16,9 +16,9 @@ public class AndresWristSubsystem {
     // WRIST_ROTATE_DIVISOR
     // when rotating the wrist, the wristPosition variable is
     // incremented or decremented by the joystick position divided by this value.
-    // MUST BE CALIBRATED
+    // 500 is a pretty good number. Increase for a more precise  adjustment of the wrist.
     public final int WRIST_ROTATE_DIVISOR = 500;
-    public final double TWIST_NORMAL_POSITION = 0.5;
+    public final double TWIST_NORMAL_POSITION = 129.0/200;
 
 
     // declare important versions of variables from the teleop/autoop modes
@@ -100,16 +100,15 @@ public class AndresWristSubsystem {
         // All inputs below 0.5 will be Case 1, and all inputs above or equal to 0.5 will be Case 2.
         // Case 1 will be linear with other points in Case 1, but not with those in Case 2.
 
-        // If you want to switch the order of the controls, uncomment the line below:
-        // twistPosition = 1 - twistPosition;
-        // (I think that should work).
+        // The line below reverses the controls.
+        twistPosition = 1 - twistPosition;
 
         if (twistPosition < 0.5){
             // Case 1:
             // something must be MULTIPLIED because 0 remains equal to 0.
             // However, 0.5 becomes 129/200
             // to turn 0.5 into 129/200, you would multiply by (129/200)/0.5 = (129/200)/(1/2) = (129/200)*2 = 129/100.
-            twistPosition *= 129.0/100;
+            twistPosition *= 2*TWIST_NORMAL_POSITION;
         }
         else{
             // Case 2:
@@ -119,10 +118,11 @@ public class AndresWristSubsystem {
             // (because 0k = 0, and then 0 must become 129/200.) The scalar will be
             // the number that, when multiplied by 0.5, is equal to 1 - (129/200). That's 200/200 - 129/200 = 71/200.
             // 0.5k = 71/200. Divide both sides by 0.5. k = (71/200)/(1/2) = 71/100.
+            // The TWIST_NORMAL_POSITION constant has been used to generalize this.
 
             twistPosition -= 0.5;
-            twistPosition *= 71.0/100;
-            twistPosition += 129.0/200;
+            twistPosition *= 2*(1-TWIST_NORMAL_POSITION);
+            twistPosition += TWIST_NORMAL_POSITION;
         }
         twist.setPosition(twistPosition);
 
