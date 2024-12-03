@@ -18,15 +18,15 @@ public class ArmSubsystem {
 
         //set telemetry:
         this.telemetry = telemetry;
-        this.speed = 4;
+        this.speed = -1;
         //actually define elevate and extend
         Elevation = hwMap.get(DcMotor.class, "Elevation");
         Extension = hwMap.get(DcMotor.class, "Extension");
         //set modes to run using the encoder
-        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 
@@ -34,15 +34,15 @@ public class ArmSubsystem {
     public boolean armUp(int newPosition) {
         telemetry.addData("current pos: ", Elevation.getCurrentPosition());
         telemetry.addData("target pos: ", newPosition);
-        Elevation.setTargetPosition(newPosition);
-        Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        Elevation.setTargetPosition(newPosition);
+        //Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         Elevation.setPower(speed);
-        if (Elevation.isBusy()){
+        if (Elevation.getCurrentPosition()>newPosition){
             return true;
         }
         Elevation.setPower(0);
-        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         return false;
     }
 
@@ -50,9 +50,9 @@ public class ArmSubsystem {
     public boolean armDown(int newPosition) {
         telemetry.addData("current pos: ", Elevation.getCurrentPosition());
         telemetry.addData("target pos: ", newPosition);
-        Elevation.setTargetPosition(newPosition);
+        Elevation.setTargetPosition(-newPosition);
         Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Elevation.setPower(-speed);
+        Elevation.setPower(speed);
         if (Elevation.isBusy()){
             return false;
         }

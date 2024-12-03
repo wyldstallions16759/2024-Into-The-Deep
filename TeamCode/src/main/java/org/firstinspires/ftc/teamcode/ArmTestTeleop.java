@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="TestArmTeleOp", group="Linear OpMode")
+@Autonomous(name="TestArmTeleOp", group="Linear OpMode")
 
 public class ArmTestTeleop extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
@@ -16,19 +17,16 @@ public class ArmTestTeleop extends LinearOpMode {
         telemetry.update();
         waitForStart();
         runtime.reset();
-        boolean armBusy = true;
-
+        int i = 0;
         while(opModeIsActive()){
-            boolean up = gamepad2.dpad_down;
-            boolean down = gamepad2.dpad_up;
-            if (armBusy) {
-                if (up) {
-                    armBusy = arm.armUp(1000);
-                }
-                if (down) {
-                    armBusy = arm.armDown(1000);
-                }
+            telemetry.addData("running", i);
+            boolean armBusy = arm.armUp(-1000);
+            if (!armBusy){
+                sleep(100000);
+                break;
             }
+            i++;
+            telemetry.update();
         }
     }
 }
