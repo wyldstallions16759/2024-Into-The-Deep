@@ -13,6 +13,8 @@ public class ArmSubsystem {
     private Telemetry telemetry;
 
     private int speed;
+    private int elevationTarget;
+    private int extensionTarget;
     // Constructor
     public ArmSubsystem(HardwareMap hwMap, Telemetry telemetry) {
 
@@ -22,77 +24,80 @@ public class ArmSubsystem {
         //actually define elevate and extend
         Elevation = hwMap.get(DcMotor.class, "Elevation");
         Extension = hwMap.get(DcMotor.class, "Extension");
+        Elevation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //set modes to run using the encoder
 //        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 //        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
+//    You have to call setElevationPosition before calling armUp or armDown.
+//    If you are calling armUp set it to a negative and armDown a positive.
+//    Make sure to check if it the first time calling this (see ArmTestTeleop.java)
+//    Basically NEVER run this in a loop or i will kill you if you come to me asking why it doesn't work
+    public void setElevationTarget(int newPosition){
+        elevationTarget = Elevation.getCurrentPosition() + newPosition;
+    }
 
-
+    //same as setElevationTarget. Extend is negative
+    public void setExtensionTarget(int newPosition){
+        extensionTarget = Elevation.getCurrentPosition() + newPosition;
+    }
     // Move arm up until the newPosition reached
-    public boolean armUp(int newPosition) {
+    public boolean armUp() {
         telemetry.addData("current pos: ", Elevation.getCurrentPosition());
-        telemetry.addData("target pos: ", newPosition);
-//        Elevation.setTargetPosition(newPosition);
-        //Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        telemetry.addData("target pos: ", elevationTarget);
         Elevation.setPower(speed);
-        if (Elevation.getCurrentPosition()>newPosition){
+        if (Elevation.getCurrentPosition()>=elevationTarget){
             return true;
         }
+        telemetry.addData("current pos: ", Elevation.getCurrentPosition());
+        telemetry.update();
         Elevation.setPower(0);
-//        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         return false;
     }
 
     // Move arm down until newPosition reached
-    public boolean armDown(int newPosition) {
+    public boolean armDown() {
         telemetry.addData("current pos: ", Elevation.getCurrentPosition());
-        telemetry.addData("target pos: ", newPosition);
-        Elevation.setTargetPosition(-newPosition);
-        Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Elevation.setPower(speed);
-        if (Elevation.isBusy()){
-            return false;
+        telemetry.addData("target pos: ", elevationTarget);
+        Elevation.setPower(-speed);
+        if (Elevation.getCurrentPosition()<=elevationTarget){
+            return true;
         }
+        telemetry.addData("current pos: ", Elevation.getCurrentPosition());
+        telemetry.update();
         Elevation.setPower(0);
-        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        return true;
-
+        return false;
     }
 
     // Extend arm out until the newPosition reached
-    public boolean armExtend(int newPosition) {
+    public boolean armExtend() {
         telemetry.addData("current pos: ", Extension.getCurrentPosition());
-        telemetry.addData("target pos: ", newPosition);
-        Extension.setTargetPosition(newPosition);
-        Extension.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Extension.setPower(speed);
-        if (Extension.isBusy()){
-            return false;
-        }
-        Extension.setPower(0);
-        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        return true;
-    }
-
-    // Extend arm out until the newPosition reached
-    public boolean armRetract(int newPosition) {
-        telemetry.addData("current pos: ", Extension.getCurrentPosition());
-        telemetry.addData("target pos: ", newPosition);
-        Extension.setTargetPosition(newPosition);
-        Extension.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        telemetry.addData("target pos: ", extensionTarget);
         Extension.setPower(-speed);
-        if (Extension.isBusy()){
-            return false;
+        if (Extension.getCurrentPosition()<=extensionTarget){
+            return true;
         }
-        Extension.setPower(0);
-        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        return true;
+        telemetry.addData("current pos: ", Extension.getCurrentPosition());
+        telemetry.update();
+        Elevation.setPower(0);
+        return false;
+    }
+
+    // Extend arm out until the newPosition reached
+    public boolean armRetract() {
+        telemetry.addData("current pos: ", Extension.getCurrentPosition());
+        telemetry.addData("target pos: ", extensionTarget);
+        Extension.setPower(speed);
+        if (Extension.getCurrentPosition()>=extensionTarget){
+            return true;
+        }
+        telemetry.addData("current pos: ", Extension.getCurrentPosition());
+        telemetry.update();
+        Elevation.setPower(0);
+        return false;
     }
 }
 

@@ -18,11 +18,16 @@ public class ArmTestTeleop extends LinearOpMode {
         waitForStart();
         runtime.reset();
         int i = 0;
+        boolean firstTime = true;
         while(opModeIsActive()){
             telemetry.addData("running", i);
-            boolean armBusy = arm.armUp(-1000);
-            if (!armBusy){
-                sleep(100000);
+            if (firstTime){
+                arm.setExtensionTarget(1000);
+                firstTime = false;
+            }
+            boolean armBusy = arm.armRetract();
+            if (!armBusy) {
+                sleep(1000);
                 break;
             }
             i++;
