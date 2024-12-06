@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Pinpoint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.MM;
@@ -50,6 +51,8 @@ public class Pinpoint {
     public Pose2D getCurrentPosition() {
         return odo.getPosition();
     }
+
+    public void resetPose() {odo.resetPosAndIMU();}
     public double getXpos() {
         return odo.getEncoderX();
     }

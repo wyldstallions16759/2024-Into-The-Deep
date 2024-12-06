@@ -8,17 +8,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
-@Autonomous(name="Auto16760and28147")
+@Autonomous(name="Autogood")
 //@Disabled
 
 // Comment
 
-public class Auto28147 extends LinearOpMode {
+public class Auto28147good extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
         WAITING_FOR_START,
-        DRIVE_TO_FRONT_SUBMERSIBLE,
         DRIVE_TO_SUBMERSIBLE,
         PLACE_SPECIMEN,
         RELEASE_SPECIMEN,
@@ -28,19 +27,17 @@ public class Auto28147 extends LinearOpMode {
 
     //set a bunch of places to go
     static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
-    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -25, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -22, 13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -29, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 72, AngleUnit.DEGREES, -90);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
 
     static final int ARM_ROTATION_POSITION = -900;
-    static final int ARM_EXTEND_POSITION = 7000;
+    static final int ARM_EXTEND_POSITION = 8000;
     static final double ARM_ROTATION_SPEED = 1;
     static final double ARM_EXTENSION_SPEED = 1;
 
-    static final double DRIVE_SPEED = 0.45;
+    static final double DRIVE_SPEED = 0.15;
 
 
     boolean firstTime = true;
@@ -82,15 +79,15 @@ public class Auto28147 extends LinearOpMode {
             //----------------------------------------------------------
 
             if (stateMachine == StateMachine.WAITING_FOR_START){
-                stateMachine = StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE;
+                stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
             }
 
             //----------------------------------------------------------
-            // State: DRIVE_TO_FRONT_SUBMERSIBLE
-            // Actions: Drive just short of submersible and elevate and extend arm
-            // Next State: DRIVE_TO_SUBMERSIBLE
+            // State: DRIVE_TO_SUBMERSIBLE
+            // Actions:
+            // Next State: PLACE_SPECIMEN
             //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE) {
+            if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
 
                 // Set encoder targets for arm elevation and extension
                 if (firstTime){
@@ -99,46 +96,22 @@ public class Auto28147 extends LinearOpMode {
                     firstTime = false;
                 }
 
+                telemetry.addData("state: ", "Release Specimen");
+                telemetry.update();
                 // In parallel:
                 // (a) drive to front of submersible
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                boolean driveBusy = pinpoint.driveTo(FRONT_SUBMERSIBLE, DRIVE_SPEED, 0);
+                boolean driveBusy = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
                 boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
                 boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
 
-                if (!driveBusy && !armElevBusy && !armExtBusy) {
+                 if (!driveBusy && !armElevBusy && !armExtBusy) {
                     stateMachine = StateMachine.RELEASE_SPECIMEN;
                     firstTime = true;
-                     telemetry.addData("Driving to Front Submersible", 0);
-                     telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                     telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                     telemetry.update();
                 }
             }
-
-            //----------------------------------------------------------
-            // State: DRIVE_TO_SUBMERSIBLE
-            // Actions: Move in position to place specimen
-            // Next State: RELEASE_SPECIMEN
-            //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE){
-                telemetry.addData("Driving to Submersible", 0);
-                telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                telemetry.update();
-//                if (firstTime) {
-//                    pinpoint.resetPose();
-//                    firstTime = false;
-//                }
-                boolean driveBusy = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
-                if (!driveBusy) {
-                    stateMachine = StateMachine.END;
-                    firstTime = true;
-                }
-            }
-
 
             //----------------------------------------------------------
             // State: RELEASE_SPECIMEN
@@ -146,6 +119,7 @@ public class Auto28147 extends LinearOpMode {
             // Next State: DRIVE_TO_OBSERVATION_ZONE
             //----------------------------------------------------------
             if (stateMachine == StateMachine.RELEASE_SPECIMEN){
+                sleep(10000);
                 if (firstTime){
                     arm.setExtensionTarget(-6000);
                     firstTime = false;
@@ -158,27 +132,15 @@ public class Auto28147 extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                boolean armExtBusy = arm.armRetract(ARM_EXTENSION_SPEED);
-                sleep(2500);
+                arm.armRetract(ARM_EXTENSION_SPEED);
+                sleep(3000);
                 wrist.toggleClaw();
-                sleep(0);
-                if (!armExtBusy) {
-                    telemetry.update();
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
-                    firstTime = true;
+                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
                 }
-            }
 
-            //----------------------------------------------------------
-            // State: DRIVE_TO_OBSERVATION_ZONE
-            // Actions: open fingers to release specimen
-            // Next State: DRIVE_TO_OBSERVATION_ZONE
-            //----------------------------------------------------------
             if (stateMachine == StateMachine.DRIVE_TO_OBSERVATION_ZONE) {
                 boolean job1 = pinpoint.driveTo(OBSERVATION,0.3,100);
-                if (job1) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
-                }
+                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
             }
 
 
@@ -187,9 +149,7 @@ public class Auto28147 extends LinearOpMode {
             // Actions: Done with auto routine
             //----------------------------------------------------------
             if (stateMachine == StateMachine.END) {
-                telemetry.addData("******END*******", 0);
-                telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));                telemetry.addData("ElevationPos: ", arm.getElevationPos());
+                telemetry.addData("ElevationPos: ", arm.getElevationPos());
                 telemetry.addData("ExtensionPos: ", arm.getExtensionPos());
             }
 

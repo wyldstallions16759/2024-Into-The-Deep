@@ -52,6 +52,12 @@ public class Teleop16760and28147 extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor Elevation = null;
     private DcMotor Extension = null;
+    static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
+    static Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -29, 13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
+    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
+
 
 
 //    //private Servo LeftFinger = null;
@@ -138,6 +144,9 @@ public class Teleop16760and28147 extends LinearOpMode {
             boolean preset_specimen = gamepad2.right_bumper;
             boolean onoroff_Specimen = false;
             boolean reset_encoders = gamepad2.x;
+            boolean SUB = gamepad2.dpad_left;
+            boolean OZ = gamepad2.dpad_right;
+            double dumb = 13.9;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -214,7 +223,23 @@ public class Teleop16760and28147 extends LinearOpMode {
             if (wrist_toggle && !oldWristButton){
                 wristSubsystem.toggleWrist();
             }
-
+//            if (SUB) {
+//                SUBMERSIBLE = new Pose2D(DistanceUnit.INCH,-29 ,dumb += 2,AngleUnit.DEGREES,0);
+//                pinpoint.driveTo(SUBMERSIBLE,0.3,0);
+//            } else {
+//                leftFrontDrive.setPower(0);
+//                rightFrontDrive.setPower(0);
+//                leftBackDrive.setPower(0);
+//                rightBackDrive.setPower(0);
+//            }
+//            if (OZ) {
+//                pinpoint.driveTo(OBSERVATION,0.3,0);
+//            } else {
+//                leftFrontDrive.setPower(0);
+//                rightFrontDrive.setPower(0);
+//                leftBackDrive.setPower(0);
+//                rightBackDrive.setPower(0);
+//            }
             oldWristButton = wrist_toggle;
             oldClawButton = claw_toggle;
 
