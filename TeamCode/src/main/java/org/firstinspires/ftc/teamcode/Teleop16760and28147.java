@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -42,7 +40,7 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="USE_THIS_TELEOP", group="Linear OpMode")
+@TeleOp(name="Official TeleOp 2024", group="Linear OpMode")
 //@Disabled
 public class Teleop16760and28147 extends LinearOpMode {
 
@@ -54,12 +52,14 @@ public class Teleop16760and28147 extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor Elevation = null;
     private DcMotor Extension = null;
-    //private Servo LeftFinger = null;
-    private Servo RightFinger = null;
 
-    private final double CLAWPOS_OPEN = 0;
-    private final double CLAWPOS_CLOSED = 1;
-    private final double CLAWPOS_CLOSED_MINIMUM = 0.25;
+
+//    //private Servo LeftFinger = null;
+//    private Servo RightFinger = null;
+
+    //declare subsystems:
+    private WristSubsystem wristSubsystem;
+
     public void runOpMode() {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
@@ -70,10 +70,12 @@ public class Teleop16760and28147 extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "backRight");
         Elevation  = hardwareMap.get(DcMotor.class, "Elevation");
         Extension  = hardwareMap.get(DcMotor.class, "Extension");
-        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
-        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
+//        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
+//        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
+        // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
-
+        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
+        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -87,7 +89,7 @@ public class Teleop16760and28147 extends LinearOpMode {
 
         Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RightFinger.scaleRange(0.4,0.7);
+//        RightFinger.scaleRange(0.4,0.7);
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -95,7 +97,7 @@ public class Teleop16760and28147 extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         Elevation.setDirection(DcMotor.Direction.FORWARD);
         Extension.setDirection(DcMotor.Direction.FORWARD);
-        RightFinger.setDirection(Servo.Direction.FORWARD);
+//        RightFinger.setDirection(Servo.Direction.FORWARD);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -106,12 +108,16 @@ public class Teleop16760and28147 extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        boolean oldWristButton = false;
+        float oldClawButton = 0;
+
         waitForStart();
         runtime.reset();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
+            pinpoint.update();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double axial = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
@@ -123,7 +129,8 @@ public class Teleop16760and28147 extends LinearOpMode {
             boolean down = gamepad2.dpad_up;
             float claw_in = gamepad2.right_trigger;
             float claw_out = gamepad2.left_trigger;
-            boolean claw_toggle_in = gamepad2.right_bumper;
+            float claw_toggle = gamepad2.right_trigger;
+            boolean wrist_toggle = gamepad2.b;
             boolean release_slightly_claw = gamepad2.left_bumper;
             boolean slow_the_flip_down = gamepad1.right_bumper;
             float claw_left_val = 0;
@@ -199,60 +206,31 @@ public class Teleop16760and28147 extends LinearOpMode {
                 Extension.setPower(0);
             }
 
-            /* ROTATION END EFFECTOR (16759)
-            if (claw_toggle_out)
-            {
-                LeftFinger.setPosition(1);
-                RightFinger.setPosition(-1);
-            } else if (claw_toggle_in)
-            {
-                LeftFinger.setPosition(-1);
-                RightFinger.setPosition(1);
-            }//*/
+            // Wrist Subsystem calls:
 
-            //CLAW END EFFECTOR (16760)
-            if (claw_in >= 0.80){
-                RightFinger.setPosition(0);
+            if (claw_toggle>0.7 && !(oldClawButton>0.7)){
+                wristSubsystem.toggleClaw();
             }
-            else if (claw_out >= 0.8){
-                RightFinger.setPosition(1);
-            }//*/
-            else if (release_slightly_claw){
-                RightFinger.setPosition(CLAWPOS_CLOSED_MINIMUM);
+            if (wrist_toggle && !oldWristButton){
+                wristSubsystem.toggleWrist();
             }
-            //Preset
-            /*if (preset_specimen)
-             {
-                 if (Extension.getCurrentPosition() >= -13362)
-                 {
-                     Extension.setPower(1);
-                 } else if (Extension.getCurrentPosition() <= -13362)
-                 {
-                     Extension.setPower(-1);
-                 } else if (Extension.getCurrentPosition() == -13362)
-                 {
-                     Extension.setPower(0);
-                 }
-                 if (Elevation.getCurrentPosition() > 1000)
-                 {
-                     Elevation.setPower(1);
-                 } else if (Elevation.getCurrentPosition() < 1000)
-                 {
-                     Elevation.setPower(-1);
-                 } else if (Elevation.getCurrentPosition() == 1000)
-                 {
-                     Elevation.setPower(0);
-                 }
-             }*/
+
+            oldWristButton = wrist_toggle;
+            oldClawButton = claw_toggle;
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.addData("Elevation Encoder: ", "%d", Elevation.getCurrentPosition());
             telemetry.addData("Extension Encoder: ", "%d", Extension.getCurrentPosition());
-            telemetry.addData("Servo Position: ", "%4.2f", RightFinger.getPosition());
 //            telemetry.addData("OdoX",());
-            telemetry.addData("OdoY",pinpoint.getYpos());
+            Pose2D pose = pinpoint.getCurrentPosition();
+            telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
+            telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
+            telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
+            telemetry.addData("ElevationPos: ", arm.getElevationPos());
+            telemetry.addData("ExtensionPos: ", arm.getExtensionPos());
             telemetry.update();
         }
 //l
