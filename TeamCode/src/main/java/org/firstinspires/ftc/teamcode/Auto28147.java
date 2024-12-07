@@ -8,7 +8,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
-@Autonomous(name="Auto16760and28147")
+@Autonomous(name="Autocurrycurrycurry")
 //@Disabled
 
 // Comment
@@ -23,6 +23,8 @@ public class Auto28147 extends LinearOpMode {
         PLACE_SPECIMEN,
         RELEASE_SPECIMEN,
         DRIVE_TO_OBSERVATION_ZONE,
+        POINT1,
+        PICKUP,
         END
     }
 
@@ -32,8 +34,8 @@ public class Auto28147 extends LinearOpMode {
     static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -22, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 72, AngleUnit.DEGREES, -90);
-    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 60, AngleUnit.DEGREES, -90);
+    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -40, 48, AngleUnit.DEGREES, 90);
 
     static final int ARM_ROTATION_POSITION = -900;
     static final int ARM_EXTEND_POSITION = 7000;
@@ -164,8 +166,16 @@ public class Auto28147 extends LinearOpMode {
                 sleep(0);
                 if (!armExtBusy) {
                     telemetry.update();
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+                    stateMachine = StateMachine.POINT1;
                     firstTime = true;
+                }
+            }
+            if (stateMachine == StateMachine.POINT1) {
+                boolean job1 = pinpoint.driveTo(POINT1,0.3,1);
+
+
+                if (job1) {
+                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
                 }
             }
 
@@ -175,12 +185,28 @@ public class Auto28147 extends LinearOpMode {
             // Next State: DRIVE_TO_OBSERVATION_ZONE
             //----------------------------------------------------------
             if (stateMachine == StateMachine.DRIVE_TO_OBSERVATION_ZONE) {
-                boolean job1 = pinpoint.driveTo(OBSERVATION,0.3,100);
-                if (job1) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+                if (firstTime){
+                    arm.setElevationTarget(-3000);
+                    arm.setExtensionTarget(-2000);
+                    firstTime = false;
+                }
+                boolean job1 = pinpoint.driveTo(OBSERVATION,0.3,1);
+                boolean job2 = arm.armUp(1);
+                boolean job3 = arm.armRetract(1);
+
+                if (job1 && job2 && job3) {
+                    stateMachine = StateMachine.END;
                 }
             }
-
+            //----------------------------------------------------------
+            // State: PICKUP
+            // Actions: Done with auto routine
+            //----------------------------------------------------------
+            if (stateMachine == StateMachine.PICKUP) {
+                wrist.toggleClaw();
+                sleep(400);
+                stateMachine = StateMachine.END;
+            }
 
             //----------------------------------------------------------
             // State: END
