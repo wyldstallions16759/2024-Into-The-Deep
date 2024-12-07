@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
+import org.firstinspires.ftc.robotcore.external.State;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -32,6 +33,7 @@ public class Auto28147good extends LinearOpMode {
         POINT1,
         POINT2,
         POINT3,
+        POINT1BARM,
         POINT1b,
         POINT2b,
         POINT3b,
@@ -48,8 +50,8 @@ public class Auto28147good extends LinearOpMode {
     static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -25, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 15.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -28, 17.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -30, 15.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -30, 17.6, AngleUnit.DEGREES, 0);
 
 
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
@@ -67,7 +69,7 @@ public class Auto28147good extends LinearOpMode {
 
 
     static final double DRIVE_SPEED = 0.45;
-    int curry = 0;
+    int pickupcounter = 0;
 
 
     boolean firstTime = true;
@@ -247,108 +249,122 @@ public class Auto28147good extends LinearOpMode {
             // State: PICKUP
             // Actions: Done with auto routine
             //----------------------------------------------------------
-
+            if (stateMachine == StateMachine.PICKUP) {
+                wrist.toggleClaw();
+                sleep(400);
+                stateMachine = StateMachine.POINT1BARM;
+            }
             boolean driveBusy;
-            if ((stateMachine == StateMachine.PICKUP) && curry == 0) {
-                wrist.toggleClaw();
-                sleep(400);
-                stateMachine = StateMachine.POINT1b;
-                curry = 1;
-            } else if ((stateMachine == StateMachine.PICKUP) && curry == 1) {
-                wrist.toggleClaw();
-                sleep(400);
-                stateMachine = StateMachine.POINT2b;
-                curry = 2;
-            } else if ((stateMachine == StateMachine.PICKUP) && curry == 2) {
-                driveBusy = pinpoint.driveTo(OBSERVATION2, 0.3, 1);
+            if ((stateMachine == StateMachine.POINT1BARM) && pickupcounter == 0) {
+                if (firstTime) {
+                    arm.setElevationTarget(900);
+                    firstTime = false;
+                }
+                boolean armBusy = arm.armDown(ARM_ROTATION_SPEED);
+                if (!armBusy) {
+                    stateMachine = StateMachine.POINT1b;
+                    pickupcounter = 1;
+                    firstTime = true;
+                }
+            }
+            if ((stateMachine == StateMachine.POINT1BARM) && pickupcounter == 1) {
+                if (firstTime) {
+                    arm.setElevationTarget(900);
+                    firstTime = false;
+                }
+                boolean armBusy = arm.armDown(ARM_ROTATION_SPEED);
+                if (!armBusy) {
+                    stateMachine = StateMachine.POINT2b;
+                    pickupcounter = 2;
+                    firstTime = true;
+                }
+            }
+            if ((stateMachine == StateMachine.POINT1BARM) && pickupcounter == 2) {
+                if (firstTime) {
+                    arm.setElevationTarget(900);
+                    firstTime = false;
+                }
+                boolean armBusy = arm.armDown(ARM_ROTATION_SPEED);
+                if (!armBusy) {
+                    stateMachine = StateMachine.POINT3b;
+                    pickupcounter = 3;
+                    firstTime = true;
+                }
+            }
+            if ((stateMachine == StateMachine.POINT1BARM) && pickupcounter == 3) {
+                stateMachine = StateMachine.END;
+            }
+            if (stateMachine == StateMachine.POINT1b) {
+                driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
+                wrist.wristUp();
                 if (!driveBusy) {
-                    stateMachine = StateMachine.END;
+                    stateMachine = StateMachine.SUBMERSIBLE2;
                 }
-                if (stateMachine == StateMachine.POINT1b) {
-                    driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
+            }
+            if (stateMachine == StateMachine.POINT2b) {
+                driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
+                wrist.wristUp();
 
 
-                    if (!driveBusy) {
-                        stateMachine = StateMachine.SUBMERSIBLE2;
-                    }
+                if (!driveBusy) {
+                    stateMachine = StateMachine.SUBMERSIBLE3;
                 }
-                if (stateMachine == StateMachine.POINT2b) {
-                    driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
+            }
+            if (stateMachine == StateMachine.SUBMERSIBLE2) {
 
 
-                    if (!driveBusy) {
-                        stateMachine = StateMachine.SUBMERSIBLE3;
-                    }
-                }
-                if (stateMachine == StateMachine.SUBMERSIBLE2) {
-                    if (firstTime) {
-                        arm.setElevationTarget(ARM_ROTATION_POSITION);
-                        arm.setExtensionTarget(ARM_EXTEND_POSITION);
-                        firstTime = false;
-                    }
-                    wrist.wristDown();
-                    // In parallel:
-                    // (a) drive to front of submersible
-                    // (b) rotate arm to the specified position
-                    // (c) extend arm to the specified position
-                    // Move to next state only when all three operations complete
-                    driveBusy = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
-                    boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
-                    boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                driveBusy = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
 
 
-                    if (!driveBusy && !armElevBusy && !armExtBusy) {
-                        stateMachine = StateMachine.RELEASE_SPECIMEN;
-                        firstTime = true;
-                        telemetry.addData("Driving to Front Submersible", 0);
-                        telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                        telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                        telemetry.update();
-                    }
-                }
-                if (stateMachine == StateMachine.SUBMERSIBLE3) {
-                    if (firstTime) {
-                        arm.setElevationTarget(ARM_ROTATION_POSITION);
-                        arm.setExtensionTarget(ARM_EXTEND_POSITION);
-                        firstTime = false;
-                    }
-                    wrist.wristDown();
-                    // In parallel:
-                    // (a) drive to front of submersible
-                    // (b) rotate arm to the specified position
-                    // (c) extend arm to the specified position
-                    // Move to next state only when all three operations complete
-                    boolean driveBus = pinpoint.driveTo(SUBMERSIBLE2, DRIVE_SPEED, 0);
-                    boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
-                    boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
-
-
-                    if (!driveBus && !armElevBusy && !armExtBusy) {
-                        stateMachine = StateMachine.RELEASE_SPECIMEN;
-                        firstTime = true;
-                        telemetry.addData("Driving to Front Submersible", 0);
-                        telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                        telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                        telemetry.update();
-                    }
-                }
-                //----------------------------------------------------------
-                // State: END
-                // Actions: Done with auto routine
-                //----------------------------------------------------------
-                if (stateMachine == StateMachine.END) {
-                    telemetry.addData("******END*******", 0);
+                if (!driveBusy) {
+                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                    firstTime = true;
+                    telemetry.addData("Driving to Front Submersible", 0);
                     telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
                     telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                    telemetry.addData("ElevationPos: ", arm.getElevationPos());
-                    telemetry.addData("ExtensionPos: ", arm.getExtensionPos());
+                    telemetry.update();
                 }
-
-
-                telemetry.update();
             }
+            if (stateMachine == StateMachine.SUBMERSIBLE3) {
+
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                boolean driveBus = pinpoint.driveTo(SUBMERSIBLE2, DRIVE_SPEED, 0);
+
+                if (!driveBus) {
+                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                    firstTime = true;
+                    telemetry.addData("Driving to Front Submersible", 0);
+                    telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
+                    telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
+                    telemetry.update();
+                }
+            }
+            //----------------------------------------------------------
+            // State: END
+            // Actions: Done with auto routine
+            //----------------------------------------------------------
+            if (stateMachine == StateMachine.END) {
+                telemetry.addData("******END*******", 0);
+                telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
+                telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
+                telemetry.addData("ElevationPos: ", arm.getElevationPos());
+                telemetry.addData("ExtensionPos: ", arm.getExtensionPos());
+            }
+
+
+            telemetry.update();
         }
-
-
     }
+
+
 }
+
