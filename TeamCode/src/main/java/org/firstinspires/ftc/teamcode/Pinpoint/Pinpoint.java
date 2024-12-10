@@ -28,7 +28,7 @@ public class Pinpoint {
         nav = new DriveToPoint(opMode);
         nav.initializeMotors();
         nav.setXYCoefficients(0.01, 0, 2.0, MM, 12);
-        nav.setYawCoefficients(2, 0.5, 2.0, DEGREES, 2);
+        nav.setYawCoefficients(2, 0.6, 2.0, DEGREES, 5  );
     }
 
     public void initPinpoint(HardwareMap hwMap) {

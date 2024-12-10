@@ -8,12 +8,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
-@Autonomous(name="Autocurrycurrycurry")
+@Autonomous(name="ABAD")
 //@Disabled
 
 // Comment
 
-public class Auto28147 extends LinearOpMode {
+public class BADAOUT extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -34,7 +34,7 @@ public class Auto28147 extends LinearOpMode {
     static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -22, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -10, 80, AngleUnit.DEGREES, 0);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 30, AngleUnit.DEGREES, 0);
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -25, 65, AngleUnit.DEGREES, 90);
 
     static final int ARM_ROTATION_POSITION = -900;
@@ -84,7 +84,10 @@ public class Auto28147 extends LinearOpMode {
             //----------------------------------------------------------
 
             if (stateMachine == StateMachine.WAITING_FOR_START){
-                stateMachine = StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE;
+                boolean moving = pinpoint.driveTo(OBSERVATION, DRIVE_SPEED, 0);
+                if (!moving) {
+                    stateMachine = StateMachine.END;
+                }
             }
 
             //----------------------------------------------------------

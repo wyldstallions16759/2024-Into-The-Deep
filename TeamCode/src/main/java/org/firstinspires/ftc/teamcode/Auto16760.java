@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
-@Autonomous(name="Auto16760and28147")
+@Autonomous(name="Auto16760and28147bad")
 @Disabled
 
 // Comment
@@ -27,10 +27,10 @@ public class Auto16760 extends LinearOpMode {
     }
 
     //set a bunch of places to go
-    static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 48, 13, AngleUnit.DEGREES, 90);
+    static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 5, 50, AngleUnit.DEGREES, 90);
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, 48, 48, AngleUnit.DEGREES, 0);
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 90);
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
 
     static final int ARM_UP_POSITION = 1000;

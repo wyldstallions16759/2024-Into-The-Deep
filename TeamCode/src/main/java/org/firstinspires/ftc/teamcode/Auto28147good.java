@@ -31,10 +31,12 @@ public class Auto28147good extends LinearOpMode {
         RELEASE_SPECIMEN,
         DRIVE_TO_OBSERVATION_ZONE,
         POINT1,
+        ARMDOWN,
         POINT2,
         POINT3,
         POINT1BARM,
         POINT1b,
+        POINTB,
         POINT2b,
         POINT3b,
 
@@ -59,11 +61,12 @@ public class Auto28147good extends LinearOpMode {
     static final Pose2D OBSERVATION2 = new Pose2D(DistanceUnit.INCH, -5, 70, AngleUnit.DEGREES, 180);
 
 
-    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -40, 72, AngleUnit.DEGREES, -90);
+    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -20, 13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D POINTB = new Pose2D(DistanceUnit.INCH, -20, 72, AngleUnit.DEGREES, 0);
 
 
     static final int ARM_ROTATION_POSITION = -900;
-    static final int ARM_EXTEND_POSITION = 7000;
+    static final int ARM_EXTEND_POSITION = 7500;
     static final double ARM_ROTATION_SPEED = 1;
     static final double ARM_EXTENSION_SPEED = 1;
 
@@ -152,7 +155,7 @@ public class Auto28147good extends LinearOpMode {
                 boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
 
 
-                if (!driveBusy && !armElevBusy && !armExtBusy) {
+                if (driveBusy && !armElevBusy && !armExtBusy) {
                     stateMachine = StateMachine.RELEASE_SPECIMEN;
                     firstTime = true;
                     telemetry.addData("Driving to Front Submersible", 0);
@@ -192,7 +195,7 @@ public class Auto28147good extends LinearOpMode {
             //----------------------------------------------------------
             if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
                 if (firstTime) {
-                    arm.setExtensionTarget(-6000);
+                    arm.setExtensionTarget(-3000);
                     firstTime = false;
                 }
 
@@ -217,13 +220,17 @@ public class Auto28147good extends LinearOpMode {
             }
             if (stateMachine == StateMachine.POINT1) {
                 boolean driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
-
-
+                sleep(1000);
+                stateMachine = StateMachine.POINTB;
                 if (!driveBusy) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+
                 }
             }
-
+            if (stateMachine == StateMachine.POINTB) {
+                boolean driveBusy = pinpoint.driveTo(POINTB, 0.3, 1);
+                sleep(5000);
+                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+            }
 
             //----------------------------------------------------------
             // State: DRIVE_TO_OBSERVATION_ZONE

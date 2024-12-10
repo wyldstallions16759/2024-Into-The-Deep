@@ -8,12 +8,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
-@Autonomous(name="Autocurrycurrycurry")
+@Autonomous(name="GOODMAYBE")
 //@Disabled
 
 // Comment
 
-public class Auto28147 extends LinearOpMode {
+public class GOOD2 extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -25,6 +25,10 @@ public class Auto28147 extends LinearOpMode {
         DRIVE_TO_OBSERVATION_ZONE,
         POINT1,
         PICKUP,
+        MOVEARMUP,
+        GO_TO_POINT1,
+        GO_TO_SUB,
+        PULLDOWN,
         END
     }
 
@@ -32,10 +36,12 @@ public class Auto28147 extends LinearOpMode {
     static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -25, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -22, 13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 15.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -28, 17.6, AngleUnit.DEGREES, 0);
+
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -10, 80, AngleUnit.DEGREES, 0);
-    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -25, 65, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -15, 80, AngleUnit.DEGREES, 175);
+    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -26, 80, AngleUnit.DEGREES, 0);
 
     static final int ARM_ROTATION_POSITION = -900;
     static final int ARM_EXTEND_POSITION = 7500;
@@ -44,8 +50,6 @@ public class Auto28147 extends LinearOpMode {
 
     static final double DRIVE_SPEED = 0.45;
 
-
-    boolean firstTime = true;
     @Override
     public void runOpMode() {
 
@@ -149,7 +153,7 @@ public class Auto28147 extends LinearOpMode {
             //----------------------------------------------------------
             if (stateMachine == StateMachine.RELEASE_SPECIMEN){
                 if (firstTime){
-                    arm.setExtensionTarget(-3000);
+                    arm.setExtensionTarget(-6000);
                     firstTime = false;
                 }
 
@@ -170,12 +174,13 @@ public class Auto28147 extends LinearOpMode {
                     firstTime = true;
                 }
             }
+
             if (stateMachine == StateMachine.POINT1) {
                 boolean job1 = pinpoint.driveTo(POINT1,0.3,1);
 
 
                 if (!job1) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+                    stateMachine = StateMachine.END;
                 }
             }
 
@@ -186,11 +191,17 @@ public class Auto28147 extends LinearOpMode {
             // Next State: DRIVE_TO_OBSERVATION_ZONE
             //----------------------------------------------------------
             if (stateMachine == StateMachine.DRIVE_TO_OBSERVATION_ZONE) {
-
+                if (firstTime){
+                    arm.setElevationTarget(-1800);
+                    arm.setExtensionTarget(-2000);
+                    firstTime = false;
+                }
                 boolean job1 = pinpoint.driveTo(OBSERVATION,0.3,1);
+                boolean job2 = arm.armUp(1);
+                boolean job3 = arm.armRetract(1);
 
-                if (!job1) {
-                    stateMachine = StateMachine.END;
+                if (job1 && !job2 && !job3) {
+                    stateMachine = StateMachine.PICKUP;
                 }
             }
             //----------------------------------------------------------
@@ -198,9 +209,54 @@ public class Auto28147 extends LinearOpMode {
             // Actions: Done with auto routine
             //----------------------------------------------------------
             if (stateMachine == StateMachine.PICKUP) {
+                sleep(400);
                 wrist.toggleClaw();
                 sleep(400);
-                stateMachine = StateMachine.END;
+                stateMachine = StateMachine.MOVEARMUP;
+            }
+            if (stateMachine == StateMachine.MOVEARMUP) {
+                if (firstTime){
+                    arm.setElevationTarget(4000);
+                    arm.setExtensionTarget(7000);
+                    firstTime = false;
+                }
+                boolean job1 = arm.armDown(1);
+                boolean job2 = arm.armExtend(1);
+                if (!job1 && !job2) {
+                    stateMachine = StateMachine.GO_TO_POINT1;
+                }
+            }
+            if (stateMachine == StateMachine.GO_TO_POINT1) {
+                boolean job1 = pinpoint.driveTo(POINT1,0.3,0.5);
+                if (!job1) {
+                    stateMachine = StateMachine.GO_TO_SUB;
+                }
+            }
+            if (stateMachine == StateMachine.GO_TO_SUB) {
+                boolean job1 = pinpoint.driveTo(SUBMERSIBLE,0.3,0);
+            }
+            if (stateMachine == StateMachine.PULLDOWN) {
+                if (firstTime){
+                    arm.setExtensionTarget(-3000);
+                    firstTime = false;
+                }
+
+                telemetry.addData("state: ", "Release Specimen");
+
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                boolean armExtBusy = arm.armRetract(ARM_EXTENSION_SPEED);
+                sleep(3000);
+                wrist.toggleClaw();
+                sleep(0);
+                if (!armExtBusy) {
+                    telemetry.update();
+                    stateMachine = StateMachine.END;
+                    firstTime = true;
+                }
             }
 
             //----------------------------------------------------------
