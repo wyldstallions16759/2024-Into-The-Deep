@@ -110,7 +110,7 @@ public class Auto28147 extends LinearOpMode {
                 boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
                 boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
 
-                if (!driveBusy && !armElevBusy && !armExtBusy) {
+                if (driveBusy && !armElevBusy && !armExtBusy) {
                     stateMachine = StateMachine.RELEASE_SPECIMEN;
                     firstTime = true;
                      telemetry.addData("Driving to Front Submersible", 0);
@@ -166,7 +166,7 @@ public class Auto28147 extends LinearOpMode {
                 sleep(0);
                 if (!armExtBusy) {
                     telemetry.update();
-                    stateMachine = StateMachine.POINT1;
+                    stateMachine = StateMachine.END;
                     firstTime = true;
                 }
             }
