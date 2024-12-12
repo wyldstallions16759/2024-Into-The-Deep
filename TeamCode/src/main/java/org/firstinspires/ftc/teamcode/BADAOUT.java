@@ -31,10 +31,10 @@ public class BADAOUT extends LinearOpMode {
     //set a bunch of places to go
     static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -25, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -22, 13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, -12, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, 22, 13.6, AngleUnit.DEGREES, 0);
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 30, AngleUnit.DEGREES, 0);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -5, 24, AngleUnit.DEGREES, 179);
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, -25, 65, AngleUnit.DEGREES, 90);
 
     static final int ARM_ROTATION_POSITION = -900;
@@ -61,7 +61,7 @@ public class BADAOUT extends LinearOpMode {
         boolean firstTime = true;
         // Start state machine
         StateMachine stateMachine;
-        stateMachine = StateMachine.WAITING_FOR_START;
+        stateMachine = StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE;
 
         //intiialize servos
         wrist.wristUp();
@@ -83,10 +83,30 @@ public class BADAOUT extends LinearOpMode {
             // State: WAITING_FOR_START
             //----------------------------------------------------------
 
-            if (stateMachine == StateMachine.WAITING_FOR_START){
-                boolean moving = pinpoint.driveTo(OBSERVATION, DRIVE_SPEED, 0);
-                if (!moving) {
-                    stateMachine = StateMachine.END;
+            if (stateMachine == StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE){
+                boolean moving = pinpoint.driveTo(FRONT_SUBMERSIBLE, DRIVE_SPEED, 0);
+                if (firstTime) {
+                    arm.setElevationTarget(ARM_ROTATION_POSITION);
+                    arm.setExtensionTarget(ARM_EXTEND_POSITION);
+                    firstTime = false;
+                }
+                wrist.wristDown();
+
+
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+
+                boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
+                boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
+
+
+                if (moving && !armElevBusy && !armExtBusy) {
+                    telemetry.addData("curry", 0);
+                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                    pinpoint.update();
                 }
             }
 
@@ -95,31 +115,20 @@ public class BADAOUT extends LinearOpMode {
             // Actions: Drive just short of submersible and elevate and extend arm
             // Next State: DRIVE_TO_SUBMERSIBLE
             //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_FRONT_SUBMERSIBLE) {
+            if (stateMachine == StateMachine.WAITING_FOR_START) {
 
                 // Set encoder targets for arm elevation and extension
-                if (firstTime){
-                    arm.setElevationTarget(ARM_ROTATION_POSITION);
-                    arm.setExtensionTarget(ARM_EXTEND_POSITION);
-                    firstTime = false;
-                }
-
-                // In parallel:
-                // (a) drive to front of submersible
-                // (b) rotate arm to the specified position
-                // (c) extend arm to the specified position
-                // Move to next state only when all three operations complete
+                telemetry.addData("Driving to Front Submersible", 0);
                 boolean driveBusy = pinpoint.driveTo(FRONT_SUBMERSIBLE, DRIVE_SPEED, 0);
-                boolean armElevBusy = arm.armUp(ARM_ROTATION_SPEED);
-                boolean armExtBusy = arm.armExtend(ARM_EXTENSION_SPEED);
 
-                if (!driveBusy && !armElevBusy && !armExtBusy) {
-                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                if (driveBusy) {
+                    stateMachine = StateMachine.END;
                     firstTime = true;
                      telemetry.addData("Driving to Front Submersible", 0);
                      telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
                      telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
                      telemetry.update();
+                     pinpoint.update();
                 }
             }
 
@@ -128,21 +137,6 @@ public class BADAOUT extends LinearOpMode {
             // Actions: Move in position to place specimen
             // Next State: RELEASE_SPECIMEN
             //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE){
-                telemetry.addData("Driving to Submersible", 0);
-                telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
-                telemetry.addData("y: ", pinpoint.getCurrentPosition().getY(DistanceUnit.INCH));
-                telemetry.update();
-//                if (firstTime) {
-//                    pinpoint.resetPose();
-//                    firstTime = false;
-//                }
-                boolean driveBusy = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
-                if (!driveBusy) {
-                    stateMachine = StateMachine.END;
-                    firstTime = true;
-                }
-            }
 
 
             //----------------------------------------------------------
@@ -174,11 +168,11 @@ public class BADAOUT extends LinearOpMode {
                 }
             }
             if (stateMachine == StateMachine.POINT1) {
-                boolean job1 = pinpoint.driveTo(POINT1,0.3,1);
+                boolean job1 = pinpoint.driveTo(OBSERVATION,0.3,1);
 
 
-                if (!job1) {
-                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+                if (job1) {
+                    stateMachine = StateMachine.END;
                 }
             }
 

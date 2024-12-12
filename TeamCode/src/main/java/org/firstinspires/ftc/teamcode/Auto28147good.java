@@ -51,13 +51,13 @@ public class Auto28147good extends LinearOpMode {
     //set a bunch of places to go
     static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -25, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -30, 15.6, AngleUnit.DEGREES, 0);
+    static final Pose2D FRONT_SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, -13.6, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -30, -15.6, AngleUnit.DEGREES, 0);
     static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -30, 17.6, AngleUnit.DEGREES, 0);
 
 
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, -25, 60, AngleUnit.DEGREES, 180);
+    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 90);
     static final Pose2D OBSERVATION2 = new Pose2D(DistanceUnit.INCH, -5, 70, AngleUnit.DEGREES, 180);
 
 
@@ -76,6 +76,7 @@ public class Auto28147good extends LinearOpMode {
 
 
     boolean firstTime = true;
+    int i = 0;
 
     @Override
     public void runOpMode() {
@@ -116,6 +117,8 @@ public class Auto28147good extends LinearOpMode {
         while (opModeIsActive()) {
             //need to update odometry every time it loops
             pinpoint.update();
+            i++;
+            telemetry.addData("update pinpoint", i);
 
 
             //----------------------------------------------------------
@@ -156,7 +159,7 @@ public class Auto28147good extends LinearOpMode {
 
 
                 if (driveBusy && !armElevBusy && !armExtBusy) {
-                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                    stateMachine = StateMachine.END;
                     firstTime = true;
                     telemetry.addData("Driving to Front Submersible", 0);
                     telemetry.addData("x: ", pinpoint.getCurrentPosition().getX(DistanceUnit.INCH));
@@ -219,11 +222,11 @@ public class Auto28147good extends LinearOpMode {
                 }
             }
             if (stateMachine == StateMachine.POINT1) {
-                boolean driveBusy = pinpoint.driveTo(POINT1, 0.3, 1);
-                sleep(1000);
-                stateMachine = StateMachine.POINTB;
-                if (!driveBusy) {
+                boolean driveBusy = pinpoint.driveTo(OBSERVATION, 0.3, 0);
 
+                stateMachine = StateMachine.POINTB;
+                if (driveBusy) {
+                    stateMachine = StateMachine.END;
                 }
             }
             if (stateMachine == StateMachine.POINTB) {
