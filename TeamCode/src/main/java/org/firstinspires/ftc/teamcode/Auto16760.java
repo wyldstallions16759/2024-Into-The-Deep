@@ -51,7 +51,7 @@ public class Auto16760 extends LinearOpMode {
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7500;
 
     // ----- State: PLACE_SPECIMEN -----
-    static final int ARM_EXTEND_RELEASE_SPECIMEN = 45000;
+    static final int ARM_EXTEND_RELEASE_SPECIMEN = 4500;
 
     // ----- State: RELEASE_SPECIMEN -----
     // Only operation in this state is to toggle claw, so no need to wait for it to complete
