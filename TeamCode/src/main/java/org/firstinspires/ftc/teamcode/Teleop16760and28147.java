@@ -126,8 +126,8 @@ public class Teleop16760and28147 extends LinearOpMode {
             pinpoint.update();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral = -gamepad1.left_stick_x;
+            double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = gamepad1.left_stick_x;
             double yaw = gamepad1.right_stick_x;
             boolean in = gamepad2.a;
             boolean out = gamepad2.y;
@@ -250,12 +250,12 @@ public class Teleop16760and28147 extends LinearOpMode {
             telemetry.addData("Elevation Encoder: ", "%d", Elevation.getCurrentPosition());
             telemetry.addData("Extension Encoder: ", "%d", Extension.getCurrentPosition());
 //            telemetry.addData("OdoX",());
-            Pose2D pose = pinpoint.getCurrentPosition();
+            Pose2D pose = pinpoint.getPose();
             telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
             telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
             telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
-            telemetry.addData("ElevationPos: ", arm.getElevationPos());
-            telemetry.addData("ExtensionPos: ", arm.getExtensionPos());
+            telemetry.addData("ElevationPos: ", arm.getCurrElevPosition());
+            telemetry.addData("ExtensionPos: ", arm.getCurrExtPosition());
             telemetry.update();
         }
 //l

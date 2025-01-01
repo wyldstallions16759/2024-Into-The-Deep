@@ -6,100 +6,134 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class ArmSubsystem {
 
-    private DcMotor Elevation = null;
-    private DcMotor Extension = null;
+    // Motors for elevating and extending the arm
+    private DcMotor elevation = null;
+    private DcMotor extension = null;
 
-    // here is the telemetry:
+    // Use to print to the driver hub
     private Telemetry telemetry;
 
-    private int speed;
+    // Save targets for elevating and extending the arm
     private int elevationTarget;
     private int extensionTarget;
+
+
     // Constructor
     public ArmSubsystem(HardwareMap hwMap, Telemetry telemetry) {
 
-        //set telemetry:
         this.telemetry = telemetry;
-        this.speed = -1;
-        //actually define elevate and extend
-        Elevation = hwMap.get(DcMotor.class, "Elevation");
-        Extension = hwMap.get(DcMotor.class, "Extension");
-        Elevation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //set modes to run using the encoder
-//        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        // Initialize arm motors
+        // Reset the motor encoders so they have a value of 0 at startup
+        elevation = hwMap.get(DcMotor.class, "Elevation");
+        elevation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        elevation.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        extension = hwMap.get(DcMotor.class, "Extension");
+        extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-    //    You have to call setElevationPosition before calling armUp or armDown.
-//    If you are calling armUp set it to a negative and armDown a positive.
-//    Make sure to check if it the first time calling this (see ArmTestTeleop.java)
-//    Basically NEVER run this in a loop or i will kill you if you come to me asking why it doesn't work
+
+    // Set the Elevation target position for subsequent armUp and armDown calls
+    // Target is remembered until this function is called again
     public void setElevationTarget(int newPosition){
-        elevationTarget = Elevation.getCurrentPosition() + newPosition;
+        elevationTarget = newPosition;
     }
 
-    //same as setElevationTarget. Extend is negative
+    // Set the Extension target position for subsequent armExtend and armRetract calls
+    // Target is remembered until this function is called again
     public void setExtensionTarget(int newPosition){
-        extensionTarget = Extension.getCurrentPosition() + newPosition;
+        extensionTarget = newPosition;
     }
-    // Move arm up until the newPosition reached
-    public boolean armUp(double speed) {
-        telemetry.addData("arm pos: ", Elevation.getCurrentPosition());
-        telemetry.addData("target arm pos: ", elevationTarget);
-        Elevation.setPower(-speed);
-        if (Elevation.getCurrentPosition()>=elevationTarget){
-            return true;
+
+    //------------------------------------------------------------------------------------
+    // Move arm up at the specified power (0 - 1.0]
+    // Return true if target is reached; false if not yet reached.
+    // setElevationTarget() MUST be called before calling this function.
+    //------------------------------------------------------------------------------------
+    public boolean armUp(double power) {
+        // Target not yet reached
+        // Due to the way the arm motor is oriented, negative power moves it up
+        if (elevation.getCurrentPosition() > elevationTarget) {
+            elevation.setPower(-power);
+            return false;
         }
-        Elevation.setPower(0);
-        return false;
+        // Target reached - current position <= newPosition. Stop motor and return true
+        elevation.setPower(0);
+        return true;
     }
 
-    // Move arm down until newPosition reached
-    public boolean armDown(double speed) {
-        telemetry.addData("arm pos: ", Elevation.getCurrentPosition());
-        telemetry.addData("target arm pos: ", elevationTarget);
-        Elevation.setPower(speed);
-        if (Elevation.getCurrentPosition()<=elevationTarget){
-            return true;
+    //------------------------------------------------------------------------------------
+    // Move arm down at the specified power (0 - 1.0]
+    // Return true if target is reached; false if not yet reached.
+    // setExtensionTarget() MUST be called before calling this function.
+    //------------------------------------------------------------------------------------
+    public boolean armDown(double power) {
+        // Target not yet reached
+        if (elevation.getCurrentPosition() < elevationTarget) {
+            // Due to the way the arm motor is oriented, positive speed moves it down
+            elevation.setPower(power);
+            return false;
         }
-
-        Elevation.setPower(0);
-        return false;
+        // Target reached - current position >= newPosition. Stop motor and return true
+        elevation.setPower(0);
+        return true;
     }
 
-    // Extend arm out until the newPosition reached
-    public boolean armExtend(double speed) {
-        telemetry.addData("current extension pos: ", Extension.getCurrentPosition());
-        telemetry.addData("target extension pos: ", extensionTarget);
-        Extension.setPower(speed);
-        if (Extension.getCurrentPosition()<=extensionTarget){
+    //------------------------------------------------------------------------------------
+    // Extend arm out at the specified power (0 - 1.0]
+    // Return true if target is reached; false if not yet reached.
+    // setExtensionTarget() MUST be called before calling this function.
+    //------------------------------------------------------------------------------------
+    public boolean armExtend(double power) {
+        // Target not yet reached
+        if (extension.getCurrentPosition() < extensionTarget){
             telemetry.addData("reached position", 1);
-            return true;
+            // Positive speed extends the arm
+            extension.setPower(power);
+            return false;
         }
-        Extension.setPower(0);
-
-        return false;
+        // Target reached - current position >= newPosition. Stop motor and return true
+        extension.setPower(0);
+        return true;
     }
 
-    // Extend arm out until the newPosition reached
-    public boolean armRetract(double speed) {
-        telemetry.addData("current extension pos: ", Extension.getCurrentPosition());
-        telemetry.addData("target extension pos: ", extensionTarget);
-        Extension.setPower(-speed);
-        if (Extension.getCurrentPosition()>=extensionTarget){
-            return true;
+    //------------------------------------------------------------------------------------
+    // Retract arm at the specified power (0 - 1.0]
+    // Return true if target is reached; false if not yet reached.
+    // setExtensionTarget() MUST be called before calling this function.
+    //------------------------------------------------------------------------------------
+    public boolean armRetract(double power) {
+        // Target not yet reached
+        if (extension.getCurrentPosition() > extensionTarget){
+            telemetry.addData("reached position", 1);
+            // Negative speed retracts the arm
+            extension.setPower(-power);
+            return false;
         }
-        Extension.setPower(0);
-
-
-        return false;
+        // Target reached - current position <= newPosition. Stop motor and return true
+        extension.setPower(0);
+        return true;
     }
-    public int getElevationPos () {
-        return Elevation.getCurrentPosition();
+
+    //-----------------------------
+    // Getter functions
+    //-----------------------------
+    public int getCurrElevPosition () {
+        return elevation.getCurrentPosition();
     }
-    public int getExtensionPos () {
-        return Extension.getCurrentPosition();
+
+    public int getElevTargetPosition () {
+        return elevationTarget;
+    }
+
+    public int getCurrExtPosition () {
+        return extension.getCurrentPosition();
+    }
+
+    public int getExtTargetPosition () {
+        return extensionTarget;
     }
 }

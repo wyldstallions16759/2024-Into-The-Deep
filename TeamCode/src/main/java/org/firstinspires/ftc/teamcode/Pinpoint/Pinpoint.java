@@ -6,12 +6,15 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.MM;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.mmPerInch;
 
 public class Pinpoint {
 
     // Odometry pods x and y offsets - MUST BE FILLED IN
+//    final static double XOFFSET = mmPerInch * 4.25;
+//    final static double YOFFSET = mmPerInch * 4.0625;
     final static double XOFFSET = mmPerInch * 5.2;
     final static double YOFFSET = mmPerInch * 5.6;
 
@@ -27,8 +30,8 @@ public class Pinpoint {
         // Initiaize DriveToPoint
         nav = new DriveToPoint(opMode);
         nav.initializeMotors();
-        nav.setXYCoefficients(0.01, 0, 2.0, MM, 12);
-        nav.setYawCoefficients(2, 0.5, 2.0, DEGREES, 2);
+        nav.setXYCoefficients(0.01, 0, 2.0, INCH, 2);
+        nav.setYawCoefficients(1.2, 0 , 2.0, DEGREES, 6);
     }
 
     public void initPinpoint(HardwareMap hwMap) {
@@ -48,15 +51,26 @@ public class Pinpoint {
         odo.update();
     }
 
-    public Pose2D getCurrentPosition() {
+    public Pose2D getPose() {
         return odo.getPosition();
     }
 
-    public void resetPose() {odo.resetPosAndIMU();}
-    public double getXpos() {
+    public double getX() {return getPose().getX(INCH);}
+    public double getY() {return getPose().getY(INCH);}
+    public double getHeading() {return getPose().getHeading(DEGREES);}
+
+
+    public double getEncoderX() {
         return odo.getEncoderX();
     }
-    public double getYpos() {
+    public double getEncoderY() {
         return odo.getEncoderY();
     }
+
+    public double getDiff() { return nav.diff(); }
+    public double getHeadingError() {return nav.hError();}
+    public double getYawTolerance() {return nav.getYawTolerance(); }
+    public boolean xOutOfBounds() {return nav.xOutOfBounds();}
+    public boolean yOutOfBounds() {return nav.yOutOfBounds();}
+
 }
