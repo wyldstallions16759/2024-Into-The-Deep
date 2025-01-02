@@ -43,10 +43,7 @@ public class Auto16760 extends LinearOpMode {
     //-----------------------------------------------------------
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
-    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -24, -24, AngleUnit.DEGREES, -180);
-
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -36, 0, AngleUnit.DEGREES, 180);
     static final int ARM_ELEV_PLACE_SPECIMEN = -900;
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7500;
 
@@ -69,7 +66,7 @@ public class Auto16760 extends LinearOpMode {
     static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -6, 59.6, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_OBSERVATION_ZONE
-    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, 5, 70, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 70, AngleUnit.DEGREES, 90);
     static final int ARM_ELEV_START_POS = 0;
     static final int ARM_EXTEND_START_POS = 0;
 
@@ -100,7 +97,6 @@ public class Auto16760 extends LinearOpMode {
         waitForStart();
         resetRuntime();
 
-        this.getClass();
         // Main loop for Auto
         while (opModeIsActive()) {
 
@@ -108,7 +104,7 @@ public class Auto16760 extends LinearOpMode {
             pinpoint.update();
 
             // Send debug info to driver hub
-            displayDebugInfo(this.getClass());
+            displayDebugInfo();
 
             //----------------------------------------------------------
             // State: WAITING_FOR_START
@@ -130,23 +126,18 @@ public class Auto16760 extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 1);
-//                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
-//                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
-//                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
-//                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
 
                 // If all three conditions are met, move to next state to retract the arm
-                if (driveTargetReached) {
-                    //if (driveTargetReached && armElevReached && armExtReached) {
-                    stateMachine = StateMachine.RETRACT_ARM;
+                if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.END;
                 }
-
-//
-//                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED , 3);
-//                if (driveTargetReached) {
-//                    stateMachine = StateMachine.END;
-//                }
             }
 
             //----------------------------------------------------------
@@ -235,7 +226,7 @@ public class Auto16760 extends LinearOpMode {
                 // Move to next state only when all three operations complete
                 boolean driveTargetReached = pinpoint.driveTo(OBSERVATION_ZONE, DRIVE_SPEED, 0);
                 arm.setElevationTarget(ARM_ELEV_START_POS);
-                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                  boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 arm.setExtensionTarget(ARM_EXTEND_START_POS);
                 boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
 
@@ -252,19 +243,18 @@ public class Auto16760 extends LinearOpMode {
             else if (stateMachine == StateMachine.END) {
 
             }
-        }
+      }
     }
 
-    private void displayDebugInfo(Class c) {
+    private void displayDebugInfo() {
         telemetry.addData("State: ", stateMachine);
-        telemetry.addData("Robot: ", c.getSimpleName());
         telemetry.addData("xPod: ", pinpoint.getEncoderX());
         telemetry.addData("yPod: ", pinpoint.getEncoderY());
         telemetry.addData("Pose X(in): ", pinpoint.getPose().getX(DistanceUnit.INCH));
         telemetry.addData("Pose Y(in): ", pinpoint.getPose().getY(DistanceUnit.INCH));
         telemetry.addData("Pose Heading(deg): ", pinpoint.getPose().getHeading(AngleUnit.DEGREES));
-        //telemetry.addData("yawTolerance: ", pinpoint.getYawTolerance());
-        //telemetry.addData("Heading Error: ", Math.toDegrees(pinpoint.getHeadingError()));
+        telemetry.addData("yawTolerance: ", pinpoint.getYawTolerance());
+        telemetry.addData("Heading Error: ", Math.toDegrees(pinpoint.getHeadingError()));
         telemetry.addData("ArmElevCurrPosition", arm.getCurrElevPosition());
         telemetry.addData("ArmElevTargetPosition", arm.getElevTargetPosition());
         telemetry.addData("ArmExtCurrPosition", arm.getCurrExtPosition());

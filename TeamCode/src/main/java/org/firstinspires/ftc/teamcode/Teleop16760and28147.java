@@ -64,7 +64,7 @@ public class Teleop16760and28147 extends LinearOpMode {
 //    private Servo RightFinger = null;
 
     //declare subsystems:
-    private WristSubsystem wristSubsystem;
+    //private WristSubsystem wristSubsystem;
 
     public void runOpMode() {
 
@@ -80,8 +80,8 @@ public class Teleop16760and28147 extends LinearOpMode {
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
-        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
-        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
+//        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
+//        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -218,10 +218,10 @@ public class Teleop16760and28147 extends LinearOpMode {
             // Wrist Subsystem calls:
 
             if (claw_toggle>0.7 && !(oldClawButton>0.7)){
-                wristSubsystem.toggleClaw();
+                //wristSubsystem.toggleClaw();
             }
             if (wrist_toggle && !oldWristButton){
-                wristSubsystem.toggleWrist();
+                //wristSubsystem.toggleWrist();
             }
 //            if (SUB) {
 //                SUBMERSIBLE = new Pose2D(DistanceUnit.INCH,-29 ,dumb += 2,AngleUnit.DEGREES,0);
@@ -254,8 +254,8 @@ public class Teleop16760and28147 extends LinearOpMode {
             telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
             telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
             telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
-            telemetry.addData("ElevationPos: ", arm.getCurrElevPosition());
-            telemetry.addData("ExtensionPos: ", arm.getCurrExtPosition());
+//            telemetry.addData("ElevationPos: ", arm.getCurrElevPosition());
+//            telemetry.addData("ExtensionPos: ", arm.getCurrExtPosition());
             telemetry.update();
         }
 //l
