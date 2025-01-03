@@ -23,6 +23,19 @@ public class Auto16760 extends LinearOpMode {
         RETRACT_ARM,
         RELEASE_SPECIMEN,
         DRIVE_TO_GP_1A,
+        ARM_MIDDLE_SAMPLE,
+        CLAWGRAB_1,
+        ARM_UP_1_A,
+        DELIVER_SAMPLE,
+        ARM_DOWN,
+        DROP_SAMPLE,
+        RETREAT,
+        GO_BACK,
+        PICK_SPECIMEN,
+        ARM_UP_1_B,
+        DRIVE_TO_SUB_AGAIN,
+        RETRACT_ARM_AGAIN,
+        RELEASE_SPECIMEN_AGAIN,
         DRIVE_TO_GP_1B,
         DRIVE_TO_GP_1C,
         DRIVE_TO_GP_1D,
@@ -45,6 +58,8 @@ public class Auto16760 extends LinearOpMode {
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -900;
+    static final int ARM_ELEV_PICK_SAMPLE = -1800;
+
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7500;
 
     // ----- State: PLACE_SPECIMEN -----
@@ -54,7 +69,7 @@ public class Auto16760 extends LinearOpMode {
     // Only operation in this state is to toggle claw, so no need to wait for it to complete
 
     // ----- State: DRIVE_TO_GP_1A (backup robot, move right past submersible, turn 180)
-    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -20, 53.6, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -32, 34, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1B (go forward)
     static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -62, 53.6, AngleUnit.DEGREES, 180);
@@ -66,7 +81,11 @@ public class Auto16760 extends LinearOpMode {
     static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -6, 59.6, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_OBSERVATION_ZONE
-    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 70, AngleUnit.DEGREES, 90);
+
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 34, AngleUnit.DEGREES, 90);
+    static final Pose2D SAMPLE_DELIVERY = new Pose2D(DistanceUnit.INCH, -18, 34, AngleUnit.DEGREES, 180);
+    //Leave OZ
+    static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -15, 34, AngleUnit.DEGREES, 180);
     static final int ARM_ELEV_START_POS = 0;
     static final int ARM_EXTEND_START_POS = 0;
 
@@ -136,7 +155,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
-                    stateMachine = StateMachine.END;
+                    stateMachine = StateMachine.RETRACT_ARM;
                 }
             }
 
@@ -178,41 +197,114 @@ public class Auto16760 extends LinearOpMode {
             else if (stateMachine == StateMachine.DRIVE_TO_GP_1A) {
                 boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1B;
+                    stateMachine = StateMachine.ARM_MIDDLE_SAMPLE;
+                }
+            }
+            else if (stateMachine == StateMachine.ARM_MIDDLE_SAMPLE) {
+                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+                if (armElevReached) {
+                    stateMachine = StateMachine.CLAWGRAB_1;
                 }
             }
             // Move forward
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1B) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSB, DRIVE_SPEED, 0);
-                //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 46, -37.6, AngleUnit.DEGREES, pinpoint.getHeading()), DRIVE_SPEED, 1);
-                //heading = pinpoint.getHeading() < 0 ? -180 : 180;
-                //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 46, -37.6, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
-
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1C;
-                }
+            else if (stateMachine == StateMachine.CLAWGRAB_1) {
+                wrist.clawClose();
+                sleep(500);
+                stateMachine = StateMachine.ARM_UP_1_A;
             }
             // Move right
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1C) {
-                //boolean driveTargetReached = pinpoint.driveTo(GP1_POSC, DRIVE_SPEED, 0);
-                boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, pinpoint.getX(), -54, AngleUnit.DEGREES, 180), DRIVE_SPEED, 1);
-                //heading = pinpoint.getHeading() < 0 ? -180 : 180;
-                //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 46, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1D;
+            else if (stateMachine == StateMachine.ARM_UP_1_A) {
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                if (armElevReached) {
+                    stateMachine = StateMachine.DELIVER_SAMPLE;
                 }
             }
             // Push game piece #1 into Observation Zone
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1D) {
+            else if (stateMachine == StateMachine.DELIVER_SAMPLE) {
                 //boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
-                boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, pinpoint.getY(), AngleUnit.DEGREES, pinpoint.getHeading()), DRIVE_SPEED, 1);
+                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
                 //heading = pinpoint.getHeading() < 0 ? -180 : 180;
                 //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.END;
+                    stateMachine = StateMachine.DROP_SAMPLE;
                 }
             }
 
+            else if (stateMachine == StateMachine.ARM_DOWN) {
+                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+                if (armElevReached) {
+                    stateMachine = StateMachine.DROP_SAMPLE;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DROP_SAMPLE) {
+                wrist.clawOpen();
+                sleep(250);
+                stateMachine = StateMachine.RETREAT;
+            }
+
+            else if (stateMachine == StateMachine.RETREAT) {
+                boolean driveTargetReached = pinpoint.driveTo(RETREATED, DRIVE_SPEED, 4);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.GO_BACK;
+                }
+            }
+            else if (stateMachine == StateMachine.GO_BACK) {
+                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.PICK_SPECIMEN;
+                }
+            }
+            else if (stateMachine == StateMachine.PICK_SPECIMEN) {
+                wrist.clawClose();
+                stateMachine = StateMachine.ARM_UP_1_B;
+            }
+            else if (stateMachine == StateMachine.ARM_UP_1_B) {
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                wrist.wristUp();
+                if (armElevReached) {
+                    stateMachine = StateMachine.DRIVE_TO_SUB_AGAIN;
+                }
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_SUB_AGAIN) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.RETRACT_ARM_AGAIN;
+                }
+            }
+            else if (stateMachine == StateMachine.RETRACT_ARM_AGAIN) {
+                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN);
+                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
+                // If target reached, move to next state to release specimen
+                if (armExtReached) {
+                    stateMachine = StateMachine.RELEASE_SPECIMEN_AGAIN;
+                }
+            }
+            else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
+                wrist.toggleClaw();
+                sleep(500);
+
+                // Don't need to wait for claw to toggle
+                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+            }
             //----------------------------------------------------------
             // State: DRIVE_TO_OBSERVATION_ZONE
             // Actions: open fingers to release specimen
@@ -226,7 +318,7 @@ public class Auto16760 extends LinearOpMode {
                 // Move to next state only when all three operations complete
                 boolean driveTargetReached = pinpoint.driveTo(OBSERVATION_ZONE, DRIVE_SPEED, 0);
                 arm.setElevationTarget(ARM_ELEV_START_POS);
-                  boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 arm.setExtensionTarget(ARM_EXTEND_START_POS);
                 boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
 
@@ -241,7 +333,7 @@ public class Auto16760 extends LinearOpMode {
             // Actions: Done with auto routine
             //----------------------------------------------------------
             else if (stateMachine == StateMachine.END) {
-
+                sleep(10000);
             }
       }
     }
