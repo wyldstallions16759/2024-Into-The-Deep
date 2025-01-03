@@ -13,10 +13,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.m
 public class Pinpoint {
 
     // Odometry pods x and y offsets - MUST BE FILLED IN
-//    final static double XOFFSET = mmPerInch * 4.25;
-//    final static double YOFFSET = mmPerInch * 4.0625;
-    final static double XOFFSET = mmPerInch * 5.2;
-    final static double YOFFSET = mmPerInch * 5.6;
+    final static double XOFFSET = mmPerInch * 4.4375;
+    final static double YOFFSET = mmPerInch * 1.5;
 
 
     private GoBildaPinpointDriver odo;
@@ -38,7 +36,7 @@ public class Pinpoint {
         odo = hwMap.get(GoBildaPinpointDriver.class, "odo");
         odo.setOffsets(XOFFSET, YOFFSET);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED,
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
                 GoBildaPinpointDriver.EncoderDirection.FORWARD);
         odo.resetPosAndIMU();
     }
