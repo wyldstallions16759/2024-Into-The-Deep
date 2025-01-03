@@ -7,14 +7,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.Pinpoint.DriveToPoint;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
 
-@Autonomous(name="Auto16760")
+@Autonomous(name="Auto16759")
 //@Disabled
 
-public class Auto16760 extends LinearOpMode {
+public class Auto16759 extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
