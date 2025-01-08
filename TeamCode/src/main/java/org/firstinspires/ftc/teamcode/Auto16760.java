@@ -56,20 +56,22 @@ public class Auto16760 extends LinearOpMode {
     //-----------------------------------------------------------
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, 13.6, AngleUnit.DEGREES, 0);
-    static final int ARM_ELEV_PLACE_SPECIMEN = -900;
-    static final int ARM_ELEV_PICK_SAMPLE = -1800;
+    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, -13.6, AngleUnit.DEGREES, 0);   //16760
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27, -17, AngleUnit.DEGREES, 0);//the other bot
 
-    static final int ARM_EXTEND_PLACE_SPECIMEN = 7500;
+    static final int ARM_ELEV_PLACE_SPECIMEN = -1800;
+    static final int ARM_ELEV_PICK_SAMPLE = -5500;
+
+    static final int ARM_EXTEND_PLACE_SPECIMEN = 7000;
 
     // ----- State: PLACE_SPECIMEN -----
-    static final int ARM_EXTEND_RELEASE_SPECIMEN = 4500;
+    static final int ARM_EXTEND_RELEASE_SPECIMEN = 1000;
 
     // ----- State: RELEASE_SPECIMEN -----
     // Only operation in this state is to toggle claw, so no need to wait for it to complete
 
     // ----- State: DRIVE_TO_GP_1A (backup robot, move right past submersible, turn 180)
-    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -32, 34, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 26, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1B (go forward)
     static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -62, 53.6, AngleUnit.DEGREES, 180);
@@ -92,9 +94,9 @@ public class Auto16760 extends LinearOpMode {
     // -----------------------------------
     // Drive and Arm Speeds
     // -----------------------------------
-    static final double ARM_ELEVATION_POWER = 1;
+    static final double ARM_ELEVATION_POWER = 0.5;
     static final double ARM_EXTENSION_POWER = 1;
-    static final double DRIVE_SPEED = 0.45;
+    static final double DRIVE_SPEED = 0.3;
 
 
     @Override
@@ -109,8 +111,7 @@ public class Auto16760 extends LinearOpMode {
         stateMachine = StateMachine.WAITING_FOR_START;
 
         // Initialize wrist to starting position
-        wrist.wristUp();
-        wrist.clawClose();
+
 
         // Wait for Autonomous to start
         waitForStart();
@@ -121,7 +122,8 @@ public class Auto16760 extends LinearOpMode {
 
             // IMPORTANT: odometry needs to be updated every time through the loop
             pinpoint.update();
-
+            wrist.wristDown();
+            wrist.clawClose();
             // Send debug info to driver hub
             displayDebugInfo();
 
@@ -155,7 +157,9 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.RETRACT_ARM;
+
                 }
             }
 
@@ -170,7 +174,9 @@ public class Auto16760 extends LinearOpMode {
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.RELEASE_SPECIMEN;
+
                 }
             }
 
@@ -184,7 +190,9 @@ public class Auto16760 extends LinearOpMode {
                 sleep(500);
 
                 // Don't need to wait for claw to toggle
+                pinpoint.update();
                 stateMachine = StateMachine.DRIVE_TO_GP_1A;
+
             }
 
             //----------------------------------------------------------
@@ -195,16 +203,22 @@ public class Auto16760 extends LinearOpMode {
             //----------------------------------------------------------
             // Backup, move right, and turn 180 degrees
             else if (stateMachine == StateMachine.DRIVE_TO_GP_1A) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 1);
                 if (driveTargetReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.ARM_MIDDLE_SAMPLE;
+
                 }
             }
             else if (stateMachine == StateMachine.ARM_MIDDLE_SAMPLE) {
                 arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                arm.setExtensionTarget(0);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
                 if (armElevReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.CLAWGRAB_1;
+
                 }
             }
             // Move forward
@@ -218,6 +232,7 @@ public class Auto16760 extends LinearOpMode {
                 arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 if (armElevReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.DELIVER_SAMPLE;
                 }
             }
@@ -228,14 +243,16 @@ public class Auto16760 extends LinearOpMode {
                 //heading = pinpoint.getHeading() < 0 ? -180 : 180;
                 //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
                 if (driveTargetReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.DROP_SAMPLE;
                 }
             }
 
             else if (stateMachine == StateMachine.ARM_DOWN) {
-                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                arm.setElevationTarget(-5500);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
                 if (armElevReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.DROP_SAMPLE;
                 }
             }
@@ -249,12 +266,14 @@ public class Auto16760 extends LinearOpMode {
             else if (stateMachine == StateMachine.RETREAT) {
                 boolean driveTargetReached = pinpoint.driveTo(RETREATED, DRIVE_SPEED, 4);
                 if (driveTargetReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.GO_BACK;
                 }
             }
             else if (stateMachine == StateMachine.GO_BACK) {
                 boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.PICK_SPECIMEN;
                 }
             }
@@ -267,6 +286,7 @@ public class Auto16760 extends LinearOpMode {
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 wrist.wristUp();
                 if (armElevReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.DRIVE_TO_SUB_AGAIN;
                 }
             }
@@ -286,6 +306,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.RETRACT_ARM_AGAIN;
                 }
             }
@@ -295,6 +316,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.RELEASE_SPECIMEN_AGAIN;
                 }
             }
@@ -324,6 +346,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions met, robot is parked to done with auto routine
                 if (driveTargetReached && armElevReached && armExtReached) {
+                    pinpoint.update();
                     stateMachine = StateMachine.END;
                 }
             }

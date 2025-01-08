@@ -80,6 +80,7 @@ public class Teleop16760and28147 extends LinearOpMode {
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        WristSubsystem Wrist = new WristSubsystem(hardwareMap, telemetry);
 //        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
@@ -126,8 +127,8 @@ public class Teleop16760and28147 extends LinearOpMode {
             pinpoint.update();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral = gamepad1.left_stick_x;
+            double axial = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = -gamepad1.left_stick_x;
             double yaw = gamepad1.right_stick_x;
             boolean in = gamepad2.a;
             boolean out = gamepad2.y;
@@ -218,10 +219,10 @@ public class Teleop16760and28147 extends LinearOpMode {
             // Wrist Subsystem calls:
 
             if (claw_toggle>0.7 && !(oldClawButton>0.7)){
-                //wristSubsystem.toggleClaw();
+                Wrist.toggleClaw();
             }
             if (wrist_toggle && !oldWristButton){
-                //wristSubsystem.toggleWrist();
+                Wrist.toggleWrist();
             }
 //            if (SUB) {
 //                SUBMERSIBLE = new Pose2D(DistanceUnit.INCH,-29 ,dumb += 2,AngleUnit.DEGREES,0);

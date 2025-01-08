@@ -348,8 +348,8 @@ public class DriveToPoint {
             return yPID.calculateAxisPID(yError, pGain, dGain, accel, currentTime.time());
         }
         if (direction == Direction.h) {
-            //double hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
-            hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
+            double hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
+//            hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
             return hPID.calculateAxisPID(hError, yawPGain, yawDGain, yawAccel, currentTime.time());
         }
         return 0;
