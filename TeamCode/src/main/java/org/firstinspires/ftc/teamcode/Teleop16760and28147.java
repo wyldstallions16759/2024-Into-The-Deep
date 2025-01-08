@@ -57,9 +57,8 @@ public class Teleop16760and28147 extends LinearOpMode {
     static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
     static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
-
-
-
+    static final int ARM_ELEV_PLACE_SPECIMEN = -900;
+    static final int ARM_EXTEND_PLACE_SPECIMEN = 7000;
 //    //private Servo LeftFinger = null;
 //    private Servo RightFinger = null;
 
@@ -80,7 +79,7 @@ public class Teleop16760and28147 extends LinearOpMode {
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
-//        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
+        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -119,6 +118,12 @@ public class Teleop16760and28147 extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+
+
+        boolean is_preset_specimen = false;
+        boolean old_preset_specimen = false;
+        boolean is_preset_specimen_elevation;
+        boolean is_preset_specimen_extension;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -177,6 +182,53 @@ public class Teleop16760and28147 extends LinearOpMode {
                 Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+
+            //This block of code handles one arm preset
+            //if we just pressed the button and we aren't moving to specimen position, set it to move
+            if (preset_specimen && !is_preset_specimen && !old_preset_specimen) {
+                is_preset_specimen = true;
+            }
+            //if we just pressed the button and we are moving to specimen position, stop that
+            else if (preset_specimen && is_preset_specimen && !old_preset_specimen){
+                is_preset_specimen = false;
+            }
+            old_preset_specimen = preset_specimen;
+
+            //if we want to move to the position
+            if (is_preset_specimen) {
+                //this sets our target and sets the speed we want (see getPow)
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                double pow = getPow(arm.getCurrElevPosition(), ARM_ELEV_PLACE_SPECIMEN, 1000);
+
+                //Decides if we need to move the arm up or down to reach the target
+                if (arm.getCurrElevPosition() < ARM_ELEV_PLACE_SPECIMEN){
+                    is_preset_specimen_elevation = arm.armDown(pow);
+                } else if (arm.getCurrElevPosition() > ARM_ELEV_PLACE_SPECIMEN){
+                    is_preset_specimen_elevation = arm.armUp(pow);
+                } else {
+                    //if we aren't above or below the target elevation position, we must be at it, so set true to be done
+                    is_preset_specimen_elevation = true;
+                }
+
+                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+                pow = getPow(arm.getCurrElevPosition(), ARM_EXTEND_PLACE_SPECIMEN, 10000);
+
+                //Decides if we need to move the arm up or down to reach the target
+                //Note: Tolerances are untested. Issues may be caused by the + and - 100 parts. Test tomorrow
+                if (arm.getCurrExtPosition() > ARM_EXTEND_PLACE_SPECIMEN+100){
+                    is_preset_specimen_extension = arm.armRetract(pow);
+                } else if (arm.getCurrExtPosition() < ARM_EXTEND_PLACE_SPECIMEN-100){
+                    is_preset_specimen_extension = arm.armExtend(pow);
+                } else {
+                    //if we aren't above or below the target extension position, we must be at it, so set true to be done
+                    is_preset_specimen_extension = true;
+                }
+                //if we have reached both positions, we are done and can stop entering this if and can now hit the button again.
+                if (is_preset_specimen_extension && is_preset_specimen_elevation){
+                    is_preset_specimen = false;
+                }
+            }
+
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -199,22 +251,22 @@ public class Teleop16760and28147 extends LinearOpMode {
             rightFrontDrive.setPower(rightFrontPower);
             leftBackDrive.setPower(leftBackPower);
             rightBackDrive.setPower(rightBackPower);
-
-            if (up) {
-                Elevation.setPower(1);
-            } else if (down) {
-                Elevation.setPower(-1);
-            } else if (!onoroff_Specimen){
-                Elevation.setPower(0);
+            if (!is_preset_specimen) {
+                if (up) {
+                    Elevation.setPower(1);
+                } else if (down) {
+                    Elevation.setPower(-1);
+                } else if (!onoroff_Specimen) {
+                    Elevation.setPower(0);
+                }
+                if (out) {
+                    Extension.setPower(1);
+                } else if (in) {
+                    Extension.setPower(-1);
+                } else if (!onoroff_Specimen) {
+                    Extension.setPower(0);
+                }
             }
-            if (out) {
-                Extension.setPower(1);
-            } else if (in) {
-                Extension.setPower(-1);
-            } else if (!onoroff_Specimen){
-                Extension.setPower(0);
-            }
-
             // Wrist Subsystem calls:
 
             if (claw_toggle>0.7 && !(oldClawButton>0.7)){
@@ -254,8 +306,9 @@ public class Teleop16760and28147 extends LinearOpMode {
             telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
             telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
             telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
-//            telemetry.addData("ElevationPos: ", arm.getCurrElevPosition());
-//            telemetry.addData("ExtensionPos: ", arm.getCurrExtPosition());
+            telemetry.addData("ElevationPos: ", arm.getCurrElevPosition());
+            telemetry.addData("ExtensionPos: ", arm.getCurrExtPosition());
+            telemetry.addData("Is_preset_specimen", is_preset_specimen);
             telemetry.update();
         }
 //l
@@ -341,5 +394,15 @@ public class Teleop16760and28147 extends LinearOpMode {
         //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         return true;
+    }
+
+    //Sets the power to be lower the closer we get to out target. Ask eli about the specifics of the function
+    public double getPow(int currElev, int target, double div){
+        int difference = currElev - target;
+        double pow = difference / div;
+        pow = Math.max(pow,-1);
+        pow = Math.min(pow, 1);
+        pow = Math.abs(pow);
+        return pow;
     }
 }
