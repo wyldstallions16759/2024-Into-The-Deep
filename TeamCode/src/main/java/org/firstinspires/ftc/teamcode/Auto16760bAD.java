@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 @Autonomous(name="Auto16760")
 //@Disabled
 
-public class Auto16760 extends LinearOpMode {
+public class Auto16760bAD extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -57,10 +57,8 @@ public class Auto16760 extends LinearOpMode {
     //-----------------------------------------------------------
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
-    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -28, -13.6, AngleUnit.DEGREES, 0);   //16760
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -26.5, -17, AngleUnit.DEGREES, 0);//the other bot
-    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -26.5, -19, AngleUnit.DEGREES, 0);//the other bot
-
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -26.5, -17, AngleUnit.DEGREES, 0);
+    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -48, 0, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -1800;
     static final int ARM_ELEV_PICK_SAMPLE = -5500;
 
@@ -73,32 +71,32 @@ public class Auto16760 extends LinearOpMode {
     // Only operation in this state is to toggle claw, so no need to wait for it to complete
 
     // ----- State: DRIVE_TO_GP_1A (backup robot, move right past submersible, turn 180)
-    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 25, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1B (go forward)
-    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -62, 53.6, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -56.5, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1C (move right)
-    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -46, 59.6, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -56.5, 24, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
-    static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -6, 59.6, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -4, 24, AngleUnit.DEGREES, 180);
 
-    // ----- State: DRIVE_TO_OBSERVATION_ZONE
+    // ----- States: DRIVE_TO_
 
-    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 34, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -3, 34, AngleUnit.DEGREES, 90);
     static final Pose2D SAMPLE_DELIVERY = new Pose2D(DistanceUnit.INCH, -18, 34, AngleUnit.DEGREES, 180);
     //Leave OZ
-    static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -28, 34, AngleUnit.DEGREES, 180);
+    static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -25, 34, AngleUnit.DEGREES, 180);
     static final int ARM_ELEV_START_POS = 0;
     static final int ARM_EXTEND_START_POS = 0;
 
     // -----------------------------------
     // Drive and Arm Speeds
     // -----------------------------------
-    static final double ARM_ELEVATION_POWER = 0.5;
+    static final double ARM_ELEVATION_POWER = 1;
     static final double ARM_EXTENSION_POWER = 1;
-    static final double DRIVE_SPEED = 0.50;
+    static final double DRIVE_SPEED = 0.3;
 
 
     @Override
@@ -113,7 +111,8 @@ public class Auto16760 extends LinearOpMode {
         stateMachine = StateMachine.WAITING_FOR_START;
 
         // Initialize wrist to starting position
-
+        wrist.wristUp();
+        wrist.clawClose();
 
         // Wait for Autonomous to start
         waitForStart();
@@ -134,7 +133,6 @@ public class Auto16760 extends LinearOpMode {
             //----------------------------------------------------------
             if (stateMachine == StateMachine.WAITING_FOR_START) {
                 wrist.wristDown();
-                wrist.clawClose();
                 stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
             }
 
@@ -150,6 +148,9 @@ public class Auto16760 extends LinearOpMode {
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
                 boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+//                if (driveTargetReached) {
+//                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
+//                }
 
                 arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
@@ -159,9 +160,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.RETRACT_ARM;
-
                 }
             }
 
@@ -176,9 +175,7 @@ public class Auto16760 extends LinearOpMode {
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.RELEASE_SPECIMEN;
-
                 }
             }
 
@@ -189,11 +186,10 @@ public class Auto16760 extends LinearOpMode {
             //----------------------------------------------------------
             else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
                 wrist.toggleClaw();
+                sleep(500);
 
                 // Don't need to wait for claw to toggle
-                pinpoint.update();
                 stateMachine = StateMachine.DRIVE_TO_GP_1A;
-
             }
 
             //----------------------------------------------------------
@@ -204,62 +200,86 @@ public class Auto16760 extends LinearOpMode {
             //----------------------------------------------------------
             // Backup, move right, and turn 180 degrees
             else if (stateMachine == StateMachine.DRIVE_TO_GP_1A) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, 0.4, 0);
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
-                    pinpoint.update();
-                    stateMachine = StateMachine.ARM_MIDDLE_SAMPLE;
-
+                    stateMachine = StateMachine.DRIVE_TO_GP_1B;
                 }
             }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1B) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSB, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1C;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1C) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSC, 0.3, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1D;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1D) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.END;
+                }
+            }
+            // Drive_to_GP_1E
+            // drive backwards after pushing into obs. zone
             else if (stateMachine == StateMachine.ARM_MIDDLE_SAMPLE) {
                 arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
-
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
-                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
-                if (armElevReached && armExtReached) {
-                    pinpoint.update();
+                if (armElevReached) {
                     stateMachine = StateMachine.CLAWGRAB_1;
-
                 }
             }
             // Move forward
             else if (stateMachine == StateMachine.CLAWGRAB_1) {
                 wrist.clawClose();
-                sleep(1000);
+                sleep(500);
                 stateMachine = StateMachine.ARM_UP_1_A;
             }
             // Move right
             else if (stateMachine == StateMachine.ARM_UP_1_A) {
-                arm.setElevationTarget(-3000);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 if (armElevReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.DELIVER_SAMPLE;
                 }
             }
             // Push game piece #1 into Observation Zone
             else if (stateMachine == StateMachine.DELIVER_SAMPLE) {
-                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, 0.3, 0);
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
+                //boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
+                //heading = pinpoint.getHeading() < 0 ? -180 : 180;
+                //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
                 if (driveTargetReached) {
-                    pinpoint.update();
-                    stateMachine = StateMachine.ARM_DOWN;
+                    stateMachine = StateMachine.END;
                 }
             }
-            else if (stateMachine == StateMachine.DROP_SAMPLE) {
+
+            else if (stateMachine == StateMachine.ARM_DOWN) {
+                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+                if (armElevReached) {
+                    stateMachine = StateMachine.DROP_SAMPLE;
+                }
+            }
+
+            else if  (stateMachine == StateMachine.DROP_SAMPLE) {
                 wrist.clawOpen();
                 sleep(250);
                 stateMachine = StateMachine.RETREAT;
             }
 
             else if (stateMachine == StateMachine.RETREAT) {
-                boolean driveTargetReached = pinpoint.driveTo(RETREATED, 0.2, 0);
+                boolean driveTargetReached = pinpoint.driveTo(RETREATED, DRIVE_SPEED, 0);
                 arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
-
-                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
-
-                if (driveTargetReached && armElevReached) {
-                    pinpoint.update();
-                    stateMachine = StateMachine.WAIT;
+//                boolean armElevReached = arm.armUp(0.2);
+                if (driveTargetReached /*&& armElevReached*/) {
+                    stateMachine = StateMachine.GO_BACK;
                 }
             }
             else if (stateMachine == StateMachine.WAIT) {
@@ -267,15 +287,13 @@ public class Auto16760 extends LinearOpMode {
                 stateMachine = StateMachine.GO_BACK;
             }
             else if (stateMachine == StateMachine.GO_BACK) {
-                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, 0.2, 0);
+                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.PICK_SPECIMEN;
                 }
             }
             else if (stateMachine == StateMachine.PICK_SPECIMEN) {
                 wrist.clawClose();
-                sleep(500);
                 stateMachine = StateMachine.ARM_UP_1_B;
             }
             else if (stateMachine == StateMachine.ARM_UP_1_B) {
@@ -283,7 +301,6 @@ public class Auto16760 extends LinearOpMode {
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
                 wrist.wristUp();
                 if (armElevReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.DRIVE_TO_SUB_AGAIN;
                 }
             }
@@ -293,7 +310,7 @@ public class Auto16760 extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE2, DRIVE_SPEED, 0);
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
 
                 arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
@@ -303,7 +320,6 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.RETRACT_ARM_AGAIN;
                 }
             }
@@ -313,11 +329,10 @@ public class Auto16760 extends LinearOpMode {
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.RELEASE_SPECIMEN_AGAIN;
                 }
             }
-            else if (stateMachine == StateMachine.RELEASE_SPECIMEN_AGAIN) {
+            else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
                 wrist.toggleClaw();
                 sleep(500);
 
@@ -343,7 +358,6 @@ public class Auto16760 extends LinearOpMode {
 
                 // If all three conditions met, robot is parked to done with auto routine
                 if (driveTargetReached && armElevReached && armExtReached) {
-                    pinpoint.update();
                     stateMachine = StateMachine.END;
                 }
             }
@@ -355,7 +369,7 @@ public class Auto16760 extends LinearOpMode {
             else if (stateMachine == StateMachine.END) {
                 sleep(10000);
             }
-      }
+        }
     }
 
     private void displayDebugInfo() {
