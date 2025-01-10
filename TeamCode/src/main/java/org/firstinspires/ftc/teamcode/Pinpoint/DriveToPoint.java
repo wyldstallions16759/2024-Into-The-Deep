@@ -253,6 +253,8 @@ public class DriveToPoint {
     private double diff, hError;
     private boolean xOutOfBounds, yOutOfBounds;
 
+    public boolean fix = false;
+
     public void setXYCoefficients(double p, double d, double acceleration, DistanceUnit unit, double tolerance) {
         pGain = p;
         dGain = d;
@@ -278,6 +280,9 @@ public class DriveToPoint {
         rightBackDrive = setupDriveMotor("backRight", DcMotorSimple.Direction.FORWARD);
     }
 
+    public void setFix(boolean fix) {
+        this.fix = fix;
+    }
     public boolean driveTo(Pose2D currentPosition, Pose2D targetPosition, double power, double holdTime) {
         boolean atTarget;
         double xPWR = calculatePID(currentPosition, targetPosition, Direction.x);
@@ -348,8 +353,12 @@ public class DriveToPoint {
             return yPID.calculateAxisPID(yError, pGain, dGain, accel, currentTime.time());
         }
         if (direction == Direction.h) {
-            double hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
-//            hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
+            if (fix) {
+                hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
+            }
+            else {
+                hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
+            }
             return hPID.calculateAxisPID(hError, yawPGain, yawDGain, yawAccel, currentTime.time());
         }
         return 0;
@@ -361,10 +370,10 @@ public class DriveToPoint {
 
         // If target or current headings are negative, convert to values [180 - 360]
         if (currHeading < 0) {
-            currHeading = 180 - Math.abs(currHeading) + 180;
+            currHeading = 360 - Math.abs(currHeading);
         }
         if (targetHeading < 0) {
-            targetHeading = 180 - Math.abs(targetHeading) + 180;
+            targetHeading = 360 - Math.abs(targetHeading);
         }
 
         // Find min distance between target and current headings (distinguish between directions around the circle)

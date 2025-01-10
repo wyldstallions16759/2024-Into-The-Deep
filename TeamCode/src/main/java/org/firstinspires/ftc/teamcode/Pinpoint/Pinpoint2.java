@@ -1,16 +1,16 @@
 package org.firstinspires.ftc.teamcode.Pinpoint;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH;
-import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.MM;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.mmPerInch;
 
-public class Pinpoint {
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
+public class Pinpoint2 {
 
     // Odometry pods x and y offsets - MUST BE FILLED IN
     final static double XOFFSET = mmPerInch * 4.25;
@@ -22,7 +22,7 @@ public class Pinpoint {
     private GoBildaPinpointDriver odo;
     private DriveToPoint nav;
 
-    public Pinpoint(LinearOpMode opMode, HardwareMap hwMap, Telemetry telemetry) {
+    public Pinpoint2(LinearOpMode opMode, HardwareMap hwMap, Telemetry telemetry) {
 
         // Initialize the Pinpoint
         initPinpoint(hwMap);
@@ -31,7 +31,7 @@ public class Pinpoint {
         nav = new DriveToPoint(opMode);
         nav.initializeMotors();
         nav.setXYCoefficients(0.01, 0, 2.0, INCH, 2);
-        nav.setYawCoefficients(1.05, 0.45 , 2.0, DEGREES, 6);
+        nav.setYawCoefficients(0.95, 0.6 , 2.0, DEGREES, 6);
     }
 
     public void initPinpoint(HardwareMap hwMap) {

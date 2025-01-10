@@ -11,10 +11,10 @@ import org.firstinspires.ftc.teamcode.Pinpoint.DriveToPoint;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
 
-@Autonomous(name="Auto16760GOOD")
+@Autonomous(name="Auto16760Test")
 //@Disabled
 
-public class Auto16760GOOD extends LinearOpMode {
+public class AutoTest extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -30,7 +30,8 @@ public class Auto16760GOOD extends LinearOpMode {
         DELIVER_SAMPLE,
         ARM_DOWN,
         DROP_SAMPLE,
-        RETREAT,
+        RETREAT1,
+        RETREAT2,
         WAIT,
         GO_BACK,
         PICK_SPECIMEN,
@@ -87,11 +88,13 @@ public class Auto16760GOOD extends LinearOpMode {
     static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -4, 24, AngleUnit.DEGREES, 180);
 
     // ----- States: DRIVE_TO_
+    static final Pose2D RETREATED1 = new Pose2D(DistanceUnit.INCH, -53, 24, AngleUnit.DEGREES, 180);
+    static final Pose2D RETREATED2 = new Pose2D(DistanceUnit.INCH, -53, 34, AngleUnit.DEGREES, 180);
+    static final Pose2D RETREATED3 = new Pose2D(DistanceUnit.INCH, -25, 34, AngleUnit.DEGREES, 180);
 
-    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -3, 34, AngleUnit.DEGREES, 90);
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -4, 34, AngleUnit.DEGREES, 90);
     static final Pose2D SAMPLE_DELIVERY = new Pose2D(DistanceUnit.INCH, -18, 34, AngleUnit.DEGREES, 180);
     //Leave OZ
-    static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -25, 34, AngleUnit.DEGREES, 180);
     static final int ARM_ELEV_START_POS = 0;
     static final int ARM_EXTEND_START_POS = 0;
 
@@ -100,7 +103,7 @@ public class Auto16760GOOD extends LinearOpMode {
     // -----------------------------------
     static final double ARM_ELEVATION_POWER = 1;
     static final double ARM_EXTENSION_POWER = 1;
-    static final double DRIVE_SPEED = 0.45;
+    static final double DRIVE_SPEED = 0.35;
 
 
     @Override
@@ -129,7 +132,7 @@ public class Auto16760GOOD extends LinearOpMode {
             pinpoint.update();
 
             // Send debug info to driver hub
-            displayDebugInfo();
+            //displayDebugInfo();
 
             //----------------------------------------------------------
             // State: WAITING_FOR_START
@@ -152,20 +155,20 @@ public class Auto16760GOOD extends LinearOpMode {
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
                 boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
-//                if (driveTargetReached) {
-//                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
-//                }
-
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
-                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
-
-                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
-                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
-
-                // If all three conditions are met, move to next state to retract the arm
-                if (driveTargetReached && armElevReached && armExtReached) {
-                    stateMachine = StateMachine.RETRACT_ARM;
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
                 }
+
+//                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+//                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+//
+//                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+//                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+//
+//                // If all three conditions are met, move to next state to retract the arm
+//                if (driveTargetReached && armElevReached && armExtReached) {
+//                    stateMachine = StateMachine.RETRACT_ARM;
+//                }
             }
 
             //----------------------------------------------------------
@@ -227,31 +230,37 @@ public class Auto16760GOOD extends LinearOpMode {
             else if (stateMachine == StateMachine.DRIVE_TO_GP_1D) {
                 boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.RETREAT;
+                    stateMachine = StateMachine.RETREAT1;
                 }
             }
             // Retreat
-            else if (stateMachine == StateMachine.RETREAT) {
+            else if (stateMachine == StateMachine.RETREAT1) {
                 pinpoint.setFix(true);
-                boolean driveTargetReached = pinpoint.driveTo(RETREATED, 0.2, 0);
-                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
-                boolean armElevReached = arm.armUp(0.2);
-                if (driveTargetReached && armElevReached) {
-                    stateMachine = StateMachine.WAIT;
-                    pinpoint.setFix(false);
+                boolean driveTargetReached = pinpoint.driveTo(RETREATED1, DRIVE_SPEED, 0);
+                //arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                //boolean armElevReached = arm.armUp(0.2);
+                if (driveTargetReached /*&& armElevReached*/) {
+                    stateMachine = StateMachine.RETREAT2;
+                }
+            }
+
+            else if (stateMachine == StateMachine.RETREAT2) {
+                boolean driveTargetReached = pinpoint.driveTo(RETREATED2, DRIVE_SPEED, 0);
+                //rm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                //boolean armElevReached = arm.armUp(0.2);
+                if (driveTargetReached /*&& armElevReached*/) {
+                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
                 }
             }
             //Wait
             else if (stateMachine == StateMachine.WAIT) {
-                sleep(3000);
+                sleep(4000);
                 stateMachine = StateMachine.GO_BACK;
             }
             else if (stateMachine == StateMachine.GO_BACK) {
-                pinpoint.setFix(true);
                 boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
                 if (driveTargetReached) {
                     stateMachine = StateMachine.CLAWGRAB_1;
-                    pinpoint.setFix(false);
                 }
             }
             // drive backwards after pushing into obs. zone
@@ -279,7 +288,7 @@ public class Auto16760GOOD extends LinearOpMode {
                 //heading = pinpoint.getHeading() < 0 ? -180 : 180;
                 //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.RETREAT;
+                    stateMachine = StateMachine.RETREAT1;
                 }
             }
 
@@ -294,7 +303,7 @@ public class Auto16760GOOD extends LinearOpMode {
             else if  (stateMachine == StateMachine.DROP_SAMPLE) {
                 wrist.clawOpen();
                 sleep(250);
-                stateMachine = StateMachine.RETREAT;
+                stateMachine = StateMachine.RETREAT1;
             }
 
 
@@ -317,12 +326,13 @@ public class Auto16760GOOD extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
+                pinpoint.setFix(true);
                 boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
 
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.RETRACT_ARM_AGAIN;
+                    stateMachine = StateMachine.END;
                 }
             }
             else if (stateMachine == StateMachine.RETRACT_ARM_AGAIN) {
@@ -352,14 +362,15 @@ public class Auto16760GOOD extends LinearOpMode {
                 // (b) rotate arm to starting position
                 // (c) retract arm to starting position
                 // Move to next state only when all three operations complete
+                pinpoint.setFix(false);
                 boolean driveTargetReached = pinpoint.driveTo(OBSERVATION_ZONE, DRIVE_SPEED, 0);
-                arm.setElevationTarget(ARM_ELEV_START_POS);
-                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
-                arm.setExtensionTarget(ARM_EXTEND_START_POS);
-                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+//                arm.setElevationTarget(ARM_ELEV_START_POS);
+//                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+//                arm.setExtensionTarget(ARM_EXTEND_START_POS);
+//                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
 
                 // If all three conditions met, robot is parked to done with auto routine
-                if (driveTargetReached && armElevReached && armExtReached) {
+                if (driveTargetReached /* armElevReached && armExtReached*/) {
                     stateMachine = StateMachine.END;
                 }
             }

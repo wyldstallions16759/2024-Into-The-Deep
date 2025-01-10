@@ -7,14 +7,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.Pinpoint.DriveToPoint;
-import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
+import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint2;
 
 
 @Autonomous(name="Auto16760GOOD")
 //@Disabled
 
-public class Auto16760GOOD extends LinearOpMode {
+public class Auto16760GOODCURRY extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -47,7 +46,7 @@ public class Auto16760GOOD extends LinearOpMode {
 
     StateMachine stateMachine;
 
-    Pinpoint pinpoint;
+    Pinpoint2 pinpoint;
     ArmSubsystem arm;
     WristSubsystem wrist;
 
@@ -60,7 +59,7 @@ public class Auto16760GOOD extends LinearOpMode {
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27, -17, AngleUnit.DEGREES, 0);
     static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -27, -20, AngleUnit.DEGREES, 0);
-    static final Pose2D INTERMEDIATE = new Pose2D(DistanceUnit.INCH, -6, -20, AngleUnit.DEGREES, 180);
+    static final Pose2D INTERMEDIATE = new Pose2D(DistanceUnit.INCH, -6, -20, AngleUnit.DEGREES, 0);
 
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -48, 0, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -1800;
@@ -78,10 +77,10 @@ public class Auto16760GOOD extends LinearOpMode {
     static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1B (go forward)
-    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -56.5, 13, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -50, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1C (move right)
-    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -56.5, 24, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -50, 24, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
     static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -4, 24, AngleUnit.DEGREES, 180);
@@ -107,7 +106,7 @@ public class Auto16760GOOD extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize Subsystems
-        pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        pinpoint = new Pinpoint2(this, hardwareMap, telemetry);
         arm = new ArmSubsystem(hardwareMap, telemetry);
         wrist = new WristSubsystem(hardwareMap, telemetry);
 
@@ -115,8 +114,7 @@ public class Auto16760GOOD extends LinearOpMode {
         stateMachine = StateMachine.WAITING_FOR_START;
 
         // Initialize wrist to starting position
-        wrist.wristUp();
-        wrist.clawClose();
+
 
         // Wait for Autonomous to start
         waitForStart();
@@ -137,105 +135,11 @@ public class Auto16760GOOD extends LinearOpMode {
             //----------------------------------------------------------
             if (stateMachine == StateMachine.WAITING_FOR_START) {
                 wrist.wristDown();
-                stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
-            }
-
-            //----------------------------------------------------------
-            // State: DRIVE_TO_SUBMERSIBLE
-            // Actions: Drive to the front of the submersible and elevate and extend arm
-            // Next State: DRIVE_TO_SUBMERSIBLE
-            //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
-                // In parallel:
-                // (a) drive to front of submersible
-                // (b) rotate arm to the specified position
-                // (c) extend arm to the specified position
-                // Move to next state only when all three operations complete
-                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
-//                if (driveTargetReached) {
-//                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
-//                }
-
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
-                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
-
-                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
-                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
-
-                // If all three conditions are met, move to next state to retract the arm
-                if (driveTargetReached && armElevReached && armExtReached) {
-                    stateMachine = StateMachine.RETRACT_ARM;
-                }
-            }
-
-            //----------------------------------------------------------
-            // State: RETRACT_ARM
-            // Actions: Retract arm so specimen clips on submersible
-            // Next State: RELEASE_SPECIMEN
-            //----------------------------------------------------------
-            else if (stateMachine == StateMachine.RETRACT_ARM) {
-                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN);
-                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
-
-                // If target reached, move to next state to release specimen
-                if (armExtReached) {
-                    stateMachine = StateMachine.RELEASE_SPECIMEN;
-                }
-            }
-
-            //----------------------------------------------------------
-            // State: RELEASE_SPECIMEN
-            // Actions: Open fingers to release specimen
-            // Next State: RELEASE_SPECIMEN
-            //----------------------------------------------------------
-            else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
-                wrist.toggleClaw();
-                sleep(500);
-
-                // Don't need to wait for claw to toggle
-                stateMachine = StateMachine.DRIVE_TO_GP_1A;
-            }
-
-            //----------------------------------------------------------
-            // State: DRIVE_TO_GP_1
-            // Substates: DRIVE_TO_GP_1A, DRIVE_TO_GP_1B, DRIVE_TO_GP_1C, DRIVE_TO_GP_1D
-            // Actions: Drive to the first game piece, broken up into 4 substates
-            // Next State: PUSH_GP1
-            //----------------------------------------------------------
-            // Backup, move right, and turn 180 degrees
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1A) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1B;
-                }
-            }
-
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1B) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSB, DRIVE_SPEED, 0);
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1C;
-                }
-            }
-
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1C) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSC, 0.3, 0);
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.DRIVE_TO_GP_1D;
-                }
-            }
-
-            else if (stateMachine == StateMachine.DRIVE_TO_GP_1D) {
-                boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
-                if (driveTargetReached) {
-                    stateMachine = StateMachine.RETREAT;
-                }
-            }
-            // Retreat
-            else if (stateMachine == StateMachine.RETREAT) {
+                wrist.clawClose();
                 pinpoint.setFix(true);
                 boolean driveTargetReached = pinpoint.driveTo(RETREATED, 0.2, 0);
                 arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
-                boolean armElevReached = arm.armUp(0.2);
+                boolean armElevReached = arm.armUp(0.4);
                 if (driveTargetReached && armElevReached) {
                     stateMachine = StateMachine.WAIT;
                     pinpoint.setFix(false);
@@ -259,7 +163,17 @@ public class Auto16760GOOD extends LinearOpMode {
             else if (stateMachine == StateMachine.CLAWGRAB_1) {
                 wrist.clawClose();
                 sleep(500);
-                stateMachine = StateMachine.DRIVE_TO_INTER_LOC;
+                stateMachine = StateMachine.ARM_UP_1_B;
+            }
+            else if (stateMachine == StateMachine.ARM_UP_1_B) {
+                arm.setElevationTarget(-3600);
+                arm.setExtensionTarget(1000);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                boolean armExtReached = arm.armExtend(0.4);
+                if (armElevReached && armExtReached) {
+
+                    stateMachine = StateMachine.DRIVE_TO_INTER_LOC;
+                }
             }
             // Move right
             else if (stateMachine == StateMachine.DRIVE_TO_INTER_LOC) {
