@@ -59,11 +59,13 @@ public class Teleop16760and28147 extends LinearOpMode {
     static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
     static final int ARM_ELEV_PLACE_SPECIMEN = -900;
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7000;
+
+    static final int ARM_EXTEND_TOLERANCE = 200;
 //    //private Servo LeftFinger = null;
 //    private Servo RightFinger = null;
 
     //declare subsystems:
-    //private WristSubsystem wristSubsystem;
+    private WristSubsystem wristSubsystem;
 
     public void runOpMode() {
 
@@ -80,7 +82,7 @@ public class Teleop16760and28147 extends LinearOpMode {
         // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
         ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
-//        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
+        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -131,8 +133,8 @@ public class Teleop16760and28147 extends LinearOpMode {
             pinpoint.update();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral = gamepad1.left_stick_x;
+            double axial = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = -gamepad1.left_stick_x;
             double yaw = gamepad1.right_stick_x;
             boolean in = gamepad2.a;
             boolean out = gamepad2.y;
@@ -215,9 +217,9 @@ public class Teleop16760and28147 extends LinearOpMode {
 
                 //Decides if we need to move the arm up or down to reach the target
                 //Note: Tolerances are untested. Issues may be caused by the + and - 100 parts. Test tomorrow
-                if (arm.getCurrExtPosition() > ARM_EXTEND_PLACE_SPECIMEN+100){
+                if (arm.getCurrExtPosition() > ARM_EXTEND_PLACE_SPECIMEN+ARM_EXTEND_TOLERANCE){
                     is_preset_specimen_extension = arm.armRetract(pow);
-                } else if (arm.getCurrExtPosition() < ARM_EXTEND_PLACE_SPECIMEN-100){
+                } else if (arm.getCurrExtPosition() < ARM_EXTEND_PLACE_SPECIMEN-ARM_EXTEND_TOLERANCE){
                     is_preset_specimen_extension = arm.armExtend(pow);
                 } else {
                     //if we aren't above or below the target extension position, we must be at it, so set true to be done
@@ -270,10 +272,10 @@ public class Teleop16760and28147 extends LinearOpMode {
             // Wrist Subsystem calls:
 
             if (claw_toggle>0.7 && !(oldClawButton>0.7)){
-                //wristSubsystem.toggleClaw();
+                wristSubsystem.toggleClaw();
             }
             if (wrist_toggle && !oldWristButton){
-                //wristSubsystem.toggleWrist();
+                wristSubsystem.toggleWrist();
             }
 //            if (SUB) {
 //                SUBMERSIBLE = new Pose2D(DistanceUnit.INCH,-29 ,dumb += 2,AngleUnit.DEGREES,0);
@@ -313,89 +315,6 @@ public class Teleop16760and28147 extends LinearOpMode {
         }
 //l
     }
-    public boolean Extend (double inches, double speed) {
-
-        // Determine new target position. Use the current position of the LeftFrontDrive
-        int currentTarget = (int) (inches * (452.53 / (4 * 3.145)));
-
-        telemetry.addData("current pos: ", Extension.getCurrentPosition());
-
-        telemetry.addData("target pos:  ", currentTarget);
-        telemetry.update();
-        Extension.setTargetPosition(currentTarget);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-
-        // Turn On RUN_TO_POSITION
-        Extension.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Give power to motors
-        Extension.setPower(speed);
-
-
-
-        // If motors are still busy, haven't reached target
-//        if (LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy() &&
-//                LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy()) {
-//            return false;
-//        }
-
-
-        // Motors aren't busy so we've reached our destination
-        // Turn off RUN_TO_POSITION
-        Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        return true;
-    }
-    public boolean Elevate (double inches, double speed) {
-
-        // Determine new target position. Use the current position of the LeftFrontDrive
-        int currentTarget = (int) (inches * (452.53 / (4 * 3.145)));
-
-        telemetry.addData("current pos: ", Elevation.getCurrentPosition());
-
-        telemetry.addData("target pos:  ", currentTarget);
-        telemetry.update();
-        Elevation.setTargetPosition(currentTarget);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-
-        // Turn On RUN_TO_POSITION
-        Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Give power to motors
-        Elevation.setPower(speed);
-
-
-
-        // If motors are still busy, haven't reached target
-//        if (LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy() &&
-//                LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy()) {
-//            return false;
-//        }
-
-
-        // Motors aren't busy so we've reached our destination
-        // Turn off RUN_TO_POSITION
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        return true;
-    }
-
     //Sets the power to be lower the closer we get to out target. Ask eli about the specifics of the function
     public double getPow(int currElev, int target, double div){
         int difference = currElev - target;

@@ -1,6 +1,5 @@
 // a subsystem to control NOLAN's rotating wrist thing.
-// This is used on the 28147 bot ONLY as of 12/4/2024
-// The 16760 bot uses BRENDAN's wrist and claw.
+// This is used on the 28147 bot ONLY as of 12/4/2024 also 16760
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
