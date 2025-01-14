@@ -84,7 +84,7 @@ public class Teleop16760and28147 extends LinearOpMode {
 //        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
-        Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        Pinpoint pinpoint = new Pinpoint(this, hardwareMap, id, telemetry);
         WristSubsystem Wrist = new WristSubsystem(hardwareMap, telemetry);
 //        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);

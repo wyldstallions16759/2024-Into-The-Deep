@@ -113,7 +113,8 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize Subsystems
-        pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        Identify id = new Identify(hardwareMap);
+        pinpoint = new Pinpoint(this, hardwareMap, id, telemetry);
         arm = new ArmSubsystem(hardwareMap, telemetry);
         wrist = new WristSubsystem(hardwareMap, telemetry);
 

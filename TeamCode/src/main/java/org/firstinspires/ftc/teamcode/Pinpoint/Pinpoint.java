@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Identify;
+
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH;
 import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.MM;
@@ -22,14 +24,14 @@ public class Pinpoint {
     private GoBildaPinpointDriver odo;
     private DriveToPoint nav;
 
-    public Pinpoint(LinearOpMode opMode, HardwareMap hwMap, Telemetry telemetry) {
+    public Pinpoint(LinearOpMode opMode, HardwareMap hwMap, Identify id, Telemetry telemetry) {
 
         // Initialize the Pinpoint
         initPinpoint(hwMap);
 
         // Initiaize DriveToPoint
         nav = new DriveToPoint(opMode);
-        nav.initializeMotors();
+        nav.initializeMotors(id);
         nav.setXYCoefficients(0.01, 0, 2.0, INCH, 2);
         nav.setYawCoefficients(1.05, 0.45 , 2.0, DEGREES, 6);
     }

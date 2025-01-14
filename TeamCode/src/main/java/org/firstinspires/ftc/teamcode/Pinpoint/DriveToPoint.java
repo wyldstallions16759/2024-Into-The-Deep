@@ -212,6 +212,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Identify;
 
 
 public class DriveToPoint {
@@ -273,11 +274,11 @@ public class DriveToPoint {
         myOpMode = opmode;
     }
 
-    public void initializeMotors() {
-        leftFrontDrive = setupDriveMotor("frontLeft", DcMotorSimple.Direction.REVERSE);
-        leftBackDrive = setupDriveMotor("backLeft", DcMotorSimple.Direction.REVERSE);
-        rightFrontDrive = setupDriveMotor("frontRight", DcMotorSimple.Direction.FORWARD);
-        rightBackDrive = setupDriveMotor("backRight", DcMotorSimple.Direction.FORWARD);
+    public void initializeMotors(Identify id) {
+        leftFrontDrive = id.lf;//setupDriveMotor("frontLeft", DcMotorSimple.Direction.REVERSE);
+        leftBackDrive = id.lb;//setupDriveMotor("backLeft", DcMotorSimple.Direction.REVERSE);
+        rightFrontDrive = id.rf;//setupDriveMotor("frontRight", DcMotorSimple.Direction.FORWARD);
+        rightBackDrive = id.rb;//setupDriveMotor("backRight", DcMotorSimple.Direction.FORWARD);
     }
 
     public void setFix(boolean fix) {

@@ -106,7 +106,8 @@ public class Auto16760GOODCURRY extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize Subsystems
-        pinpoint = new Pinpoint2(this, hardwareMap, telemetry);
+        Identify id = new Identify(hardwareMap);
+        pinpoint = new Pinpoint2(this, hardwareMap, id, telemetry);
         arm = new ArmSubsystem(hardwareMap, telemetry);
         wrist = new WristSubsystem(hardwareMap, telemetry);
 

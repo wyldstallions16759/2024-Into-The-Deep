@@ -2,7 +2,19 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+/*
 
+frontLeft
+frontRight
+backLeft
+backRight
+//servos
+ShoulderPivot
+RightFinger
+//exp
+Elevation
+Extension
+ */
 public class Identify{
     // Identify what robot this will be run on.
     public static enum Robot{
@@ -22,11 +34,11 @@ public class Identify{
         lf = map.get(DcMotor.class, "frontLeft");
         lb = map.get(DcMotor.class, "backLeft");
         rf = map.get(DcMotor.class, "frontRight");
+        bot = Robot.FTC16760;
         try {
             rb = map.get(DcMotor.class, "backRight");
-            bot = Robot.FTC16760;
         }
-        catch (Exception e){
+        catch (IllegalArgumentException e){
             rb = map.get(DcMotor.class, "backRight28147");
             bot = Robot.FTC28147;
         }
