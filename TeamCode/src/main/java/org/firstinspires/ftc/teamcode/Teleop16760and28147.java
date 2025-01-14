@@ -44,6 +44,8 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 //@Disabled
 public class Teleop16760and28147 extends LinearOpMode {
 
+    //Which robot are we?
+    private Identify.Robot robot;
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
@@ -70,10 +72,13 @@ public class Teleop16760and28147 extends LinearOpMode {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "frontLeft");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "backLeft");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "frontRight");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "backRight");
+        Identify id = new Identify(hardwareMap);
+        robot = id.bot;
+
+        leftFrontDrive  = id.lf;//hardwareMap.get(DcMotor.class, "frontLeft");
+        leftBackDrive  = id.lb;//hardwareMap.get(DcMotor.class, "backLeft");
+        rightFrontDrive = id.rf;//hardwareMap.get(DcMotor.class, "frontRight");
+        rightBackDrive = id.rb;//hardwareMap.get(DcMotor.class, "backRight");
         Elevation  = hardwareMap.get(DcMotor.class, "Elevation");
         Extension  = hardwareMap.get(DcMotor.class, "Extension");
 //        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
@@ -245,6 +250,7 @@ public class Teleop16760and28147 extends LinearOpMode {
             oldClawButton = claw_toggle;
 
             // Show the elapsed game time and wheel power.
+            telemetry.addData("Robot: ",robot);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
