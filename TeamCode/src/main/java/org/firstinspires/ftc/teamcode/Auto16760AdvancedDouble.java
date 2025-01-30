@@ -1,0 +1,509 @@
+package org.firstinspires.ftc.teamcode;
+
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
+
+
+@Autonomous(name="16760 28147 Two SPEC")
+
+//@Disabled
+
+public class Auto16760AdvancedDouble extends LinearOpMode {
+
+    // Auto State Machine
+    enum StateMachine {
+        WAITING_FOR_START,
+        DRIVE_TO_SUBMERSIBLE,
+        RETRACT_ARM,
+        RELEASE_SPECIMEN,
+        DRIVE_TO_GP_1A,
+        PICK_SAMPLE,
+        CLAMP,
+        DRIVE_TO_SUBMERSIBLE_AGAIN,
+        RETRACT_ARM_AGAIN,
+        RELEASE_SPECIMEN_AGAIN,
+        ARM_UP_1_B,
+        DRIVE_TO_OZ,
+        DRIVE_TO_GP_1B,
+        DRIVE_TO_GP_1C,
+        DRIVE_TO_GP_1D,
+        DRIVE_TO_GP_2A,
+        DRIVE_TO_GP_2B,
+        DRIVE_TO_GP_2C,
+        DRIVE_TO_GP_2D,
+        DRIVE_TO_OBSERVATION_ZONE,
+
+        ARM_UP_1_B_AGAIN, END
+    }
+
+    StateMachine stateMachine;
+
+    Pinpoint pinpoint;
+    ArmSubsystem arm;
+    WristSubsystem wrist;
+
+    double heading;
+
+    //-----------------------------------------------------------
+    // Field poses and arm positions for each state
+    //-----------------------------------------------------------
+
+    // ----- State: DRIVE_TO_SUBMERSIBLE -----
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -25, -17, AngleUnit.DEGREES, 0);
+    static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
+    static final int ARM_ELEV_PICK_SAMPLE = -7000;
+
+    static final int ARM_EXTEND_PLACE_SPECIMEN = 7300;
+
+    // ----- State: PLACE_SPECIMEN -----
+    static final int ARM_EXTEND_RELEASE_SPECIMEN = 400;
+
+
+    // ----- State: RELEASE_SPECIMEN -----
+    // Only operation in this state is to toggle claw, so no need to wait for it to complete
+
+    // ----- State: DRIVE_TO_GP_1A (backup robot, move right past submersible, turn 180)
+    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 13, AngleUnit.DEGREES, 0);
+
+    // ----- State: DRIVE_TO_GP_1B (go forward)
+    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -56.5, 13, AngleUnit.DEGREES, 0);
+
+    // ----- State: DRIVE_TO_GP_1C (move right)
+    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -56.5, 24, AngleUnit.DEGREES, 180);
+
+    // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
+    static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -4, 24, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POS2C = new Pose2D(DistanceUnit.INCH, -56.5, 32, AngleUnit.DEGREES, 180);
+
+    // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
+    static final Pose2D GP1_POS2D = new Pose2D(DistanceUnit.INCH, -4, 32, AngleUnit.DEGREES, 180);
+
+    // ----- States: DRIVE_TO_
+
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 34, AngleUnit.DEGREES, 180);
+    static final Pose2D SAMPLE_DELIVERY = new Pose2D(DistanceUnit.INCH, -18, 34, AngleUnit.DEGREES, 180);
+    //Leave OZ
+    static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -25, 34, AngleUnit.DEGREES, 180);
+    static final int ARM_ELEV_START_POS = 0;
+    static final int ARM_EXTEND_START_POS = 0;
+
+    // -----------------------------------
+    // Drive and Arm Speeds
+    // -----------------------------------
+    static final double ARM_ELEVATION_POWER = 1;
+    static final double ARM_EXTENSION_POWER = 1;
+    static final double DRIVE_SPEED = 0.40;
+
+
+    @Override
+    public void runOpMode() {
+
+        // Initialize Subsystems
+        pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        arm = new ArmSubsystem(hardwareMap, telemetry);
+        wrist = new WristSubsystem(hardwareMap, telemetry);
+
+        // Initialize state machine
+        stateMachine = StateMachine.WAITING_FOR_START;
+
+        // Initialize wrist to starting position
+
+
+        // Wait for Autonomous to start
+        waitForStart();
+        resetRuntime();
+
+        // Main loop for Auto
+        while (opModeIsActive()) {
+
+            // IMPORTANT: odometry needs to be updated every time through the loop
+            pinpoint.update();
+
+            // Send debug info to driver hub
+            displayDebugInfo();
+
+            //----------------------------------------------------------
+            // State: WAITING_FOR_START
+            // Starting state. Move wrist down into position for placing specimen
+            //----------------------------------------------------------
+            if (stateMachine == StateMachine.WAITING_FOR_START) {
+                wrist.wristDown();
+                wrist.clawClose();
+
+                stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
+            }
+
+            //----------------------------------------------------------
+            // State: DRIVE_TO_SUBMERSIBLE
+            // Actions: Drive to the front of the submersible and elevate and extend arm
+            // Next State: DRIVE_TO_SUBMERSIBLE
+            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+//                if (driveTargetReached) {
+//                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
+//                }
+
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.ARM_UP_1_B;
+                }
+            }
+            else if (stateMachine == StateMachine.ARM_UP_1_B) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (armElevReached) {
+                    stateMachine = StateMachine.RETRACT_ARM;
+                }
+            }
+
+            //----------------------------------------------------------
+            // State: RETRACT_ARM
+            // Actions: Retract arm so specimen clips on submersible
+            // Next State: RELEASE_SPECIMEN
+            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.RETRACT_ARM) {
+                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN-400);
+                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
+                // If target reached, move to next state to release specimen
+                if (armExtReached) {
+                    stateMachine = StateMachine.RELEASE_SPECIMEN;
+                }
+            }
+
+            //----------------------------------------------------------
+            // State: RELEASE_SPECIMEN
+            // Actions: Open fingers to release specimen
+            // Next State: RELEASE_SPECIMEN
+            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
+                wrist.clawOpen();
+                sleep(500);
+
+                // Don't need to wait for claw to toggle
+                stateMachine = StateMachine.DRIVE_TO_OZ;
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_OZ) {
+                boolean drive = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, -5, 5, AngleUnit.DEGREES ,-90),0.4,0);
+                if (drive) {
+                    stateMachine = StateMachine.PICK_SAMPLE;
+                }
+            }
+            else if (stateMachine == StateMachine.PICK_SAMPLE) {
+                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+                boolean armTo = arm.armUp(ARM_ELEVATION_POWER);
+                if (armTo) {
+                    stateMachine = StateMachine.CLAMP;
+                }
+            }
+            else if (stateMachine == StateMachine.CLAMP) {
+                wrist.toggleClaw();
+                sleep(500);
+                stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE_AGAIN;
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE_AGAIN) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                wrist.toggleWrist();
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+//                if (driveTargetReached) {
+//                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
+//                }
+
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+
+                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.ARM_UP_1_B_AGAIN;
+                }
+            }
+            else if (stateMachine == StateMachine.ARM_UP_1_B_AGAIN) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (armElevReached) {
+                    stateMachine = StateMachine.RETRACT_ARM_AGAIN;
+                }
+            }
+            else if (stateMachine == StateMachine.RETRACT_ARM_AGAIN) {
+                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN-400);
+                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
+                // If target reached, move to next state to release specimen
+                if (armExtReached) {
+                    stateMachine = StateMachine.RELEASE_SPECIMEN_AGAIN;
+                }
+            }
+
+            //----------------------------------------------------------
+            // State: RELEASE_SPECIMEN
+            // Actions: Open fingers to release specimen
+            // Next State: RELEASE_SPECIMEN
+            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.RELEASE_SPECIMEN_AGAIN) {
+                wrist.clawOpen();
+                sleep(500);
+
+                // Don't need to wait for claw to toggle
+                stateMachine = StateMachine.DRIVE_TO_GP_1A;
+            }
+            //----------------------------------------------------------
+            // State: DRIVE_TO_GP_1
+            // Substates: DRIVE_TO_GP_1A, DRIVE_TO_GP_1B, DRIVE_TO_GP_1C, DRIVE_TO_GP_1D
+            // Actions: Drive to the first game piece, broken up into 4 substates
+            // Next State: PUSH_GP1
+            //----------------------------------------------------------
+            // Backup, move right, and turn 180 degrees
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1A) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1B;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1B) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSB, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1C;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1C) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSC, 0.3, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_1D;
+                }
+            }
+
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_1D) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_2A;
+                }
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_2A) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSA, DRIVE_SPEED, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_2B;
+                }
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_2B) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POSB, 0.3, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_2C;
+                }
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_2C) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POS2C, 0.3, 0);
+                if (driveTargetReached) {
+                    stateMachine = StateMachine.DRIVE_TO_GP_2D;
+                }
+            }
+            else if (stateMachine == StateMachine.DRIVE_TO_GP_2D) {
+                boolean driveTargetReached = pinpoint.driveTo(GP1_POS2D, 0.3, 0);
+                if (driveTargetReached) {
+
+                    stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+                }
+            }
+            // Drive_to_GP_1E
+            // drive backwards after pushing into obs. zone
+//            else if (stateMachine == StateMachine.ARM_MIDDLE_SAMPLE) {
+//                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+//                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+//                if (armElevReached) {
+//                    stateMachine = StateMachine.CLAWGRAB_1;
+//                }
+//            }
+//            // Move forward
+//            else if (stateMachine == StateMachine.CLAWGRAB_1) {
+//                wrist.clawClose();
+//                sleep(500);
+//                stateMachine = StateMachine.ARM_UP_1_A;
+//            }
+//            // Move right
+//            else if (stateMachine == StateMachine.ARM_UP_1_A) {
+//                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+//                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+//                if (armElevReached) {
+//                    stateMachine = StateMachine.DELIVER_SAMPLE;
+//                }
+//            }
+//            // Push game piece #1 into Observation Zone
+//            else if (stateMachine == StateMachine.DELIVER_SAMPLE) {
+//                boolean driveTargetReached = pinpoint.driveTo(GP1_POSD, DRIVE_SPEED, 0);
+//                //boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
+//                //heading = pinpoint.getHeading() < 0 ? -180 : 180;
+//                //boolean driveTargetReached = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, 6, -54, AngleUnit.DEGREES, heading), DRIVE_SPEED, 1);
+//                if (driveTargetReached) {
+//                    stateMachine = StateMachine.END;
+//                }
+//            }
+//
+//            else if (stateMachine == StateMachine.ARM_DOWN) {
+//                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+//                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+//                if (armElevReached) {
+//                    stateMachine = StateMachine.DROP_SAMPLE;
+//                }
+//            }
+//
+//            else if  (stateMachine == StateMachine.DROP_SAMPLE) {
+//                wrist.clawOpen();
+//                sleep(250);
+//                stateMachine = StateMachine.RETREAT;
+//            }
+//
+//            else if (stateMachine == StateMachine.RETREAT) {
+//                boolean driveTargetReached = pinpoint.driveTo(RETREATED, DRIVE_SPEED, 0);
+//                arm.setElevationTarget(ARM_ELEV_PICK_SAMPLE);
+////                boolean armElevReached = arm.armUp(0.2);
+//                if (driveTargetReached /*&& armElevReached*/) {
+//                    stateMachine = StateMachine.GO_BACK;
+//                }
+//            }
+//            else if (stateMachine == StateMachine.WAIT) {
+//                sleep(4000);
+//                stateMachine = StateMachine.GO_BACK;
+//            }
+//            else if (stateMachine == StateMachine.GO_BACK) {
+//                boolean driveTargetReached = pinpoint.driveTo(SAMPLE_DELIVERY, DRIVE_SPEED, 0);
+//                if (driveTargetReached) {
+//                    stateMachine = StateMachine.PICK_SPECIMEN;
+//                }
+//            }
+//            else if (stateMachine == StateMachine.PICK_SPECIMEN) {
+//                wrist.clawClose();
+//                stateMachine = StateMachine.ARM_UP_1_B;
+//            }
+//            else if (stateMachine == StateMachine.ARM_UP_1_B) {
+//                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+//                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+//                wrist.wristUp();
+//                if (armElevReached) {
+//                    stateMachine = StateMachine.DRIVE_TO_SUB_AGAIN;
+//                }
+//            }
+//            else if (stateMachine == StateMachine.DRIVE_TO_SUB_AGAIN) {
+//                // In parallel:
+//                // (a) drive to front of submersible
+//                // (b) rotate arm to the specified position
+//                // (c) extend arm to the specified position
+//                // Move to next state only when all three operations complete
+//                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+//
+//                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+//                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+//
+//                arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
+//                boolean armExtReached = arm.armExtend(ARM_EXTENSION_POWER);
+//
+//                // If all three conditions are met, move to next state to retract the arm
+//                if (driveTargetReached && armElevReached && armExtReached) {
+//                    stateMachine = StateMachine.RETRACT_ARM_AGAIN;
+//                }
+//            }
+//            else if (stateMachine == StateMachine.RETRACT_ARM_AGAIN) {
+//                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN);
+//                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+//
+//                // If target reached, move to next state to release specimen
+//                if (armExtReached) {
+//                    stateMachine = StateMachine.RELEASE_SPECIMEN_AGAIN;
+//                }
+//            }
+//            else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
+//                wrist.toggleClaw();
+//                sleep(500);
+//
+//                // Don't need to wait for claw to toggle
+//                stateMachine = StateMachine.DRIVE_TO_OBSERVATION_ZONE;
+//            }
+//            //----------------------------------------------------------
+//            // State: DRIVE_TO_OBSERVATION_ZONE
+//            // Actions: open fingers to release specimen
+//            // Next State: DRIVE_TO_OBSERVATION_ZONE
+//            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.DRIVE_TO_OBSERVATION_ZONE) {
+                // In parallel:
+                // (a) drive to Observation Zone
+                // (b) rotate arm to starting position
+                // (c) retract arm to starting position
+                // Move to next state only when all three operations complete
+                boolean driveTargetReached = pinpoint.driveTo(OBSERVATION_ZONE, DRIVE_SPEED, 0);
+                arm.setElevationTarget(ARM_ELEV_START_POS);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+                arm.setExtensionTarget(ARM_EXTEND_START_POS);
+                boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
+                // If all three conditions met, robot is parked to done with auto routine
+                if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.END;
+                }
+            }
+//
+//            //----------------------------------------------------------a
+//            // State: END
+//            // Actions: Done with auto routine
+//            //----------------------------------------------------------
+            else if (stateMachine == StateMachine.END) {
+                sleep(10000);
+            }
+        }
+    }
+
+    private void displayDebugInfo() {
+        telemetry.addData("State: ", stateMachine);
+        telemetry.addData("xPod: ", pinpoint.getEncoderX());
+        telemetry.addData("yPod: ", pinpoint.getEncoderY());
+        telemetry.addData("Pose X(in): ", pinpoint.getPose().getX(DistanceUnit.INCH));
+        telemetry.addData("Pose Y(in): ", pinpoint.getPose().getY(DistanceUnit.INCH));
+        telemetry.addData("Pose Heading(deg): ", pinpoint.getPose().getHeading(AngleUnit.DEGREES));
+        telemetry.addData("yawTolerance: ", pinpoint.getYawTolerance());
+        telemetry.addData("Heading Error: ", Math.toDegrees(pinpoint.getHeadingError()));
+        telemetry.addData("ArmElevCurrPosition", arm.getCurrElevPosition());
+        telemetry.addData("ArmElevTargetPosition", arm.getElevTargetPosition());
+        telemetry.addData("ArmExtCurrPosition", arm.getCurrExtPosition());
+        telemetry.addData("ArmExtTargetPosition", arm.getExtTargetPosition());
+        telemetry.update();
+    }
+}

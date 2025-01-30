@@ -47,13 +47,13 @@ public class WristSubsystem {
 
     public void clawClose(){
         // move the claw closed
-        this.close.setPosition(0);
+        this.close.setPosition(1);
         this.clawClosed = true;
     }
 
     public void clawOpen(){
         // open the claw
-        this.close.setPosition(1);
+        this.close.setPosition(0);
         this.clawClosed = false;
     }
 

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint2;
 
 @Autonomous(name="Auto16760GOOD")
 //@Disabled
+@Disabled
 
 public class Auto16760GOODCURRY extends LinearOpMode {
 

@@ -11,11 +11,11 @@ import org.firstinspires.ftc.teamcode.Pinpoint.DriveToPoint;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
 
-@Autonomous(name="Auto16760SlightlyBetter")
+@Autonomous(name="16760 28147 Official Auto")
 
 //@Disabled
 
-public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
+public class Auto1676028147Official extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -62,9 +62,9 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
     //-----------------------------------------------------------
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -26, -17, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -48, 0, AngleUnit.DEGREES, 0);
-    static final int ARM_ELEV_PLACE_SPECIMEN = -1800;
+    static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
     static final int ARM_ELEV_PICK_SAMPLE = -5500;
 
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7300;
@@ -152,7 +152,7 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
             // Actions: Drive to the front of the submersible and elevate and extend arm
             // Next State: DRIVE_TO_SUBMERSIBLE
             //----------------------------------------------------------
-            if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
+            else if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE) {
                 // In parallel:
                 // (a) drive to front of submersible
                 // (b) rotate arm to the specified position
@@ -171,6 +171,20 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
 
                 // If all three conditions are met, move to next state to retract the arm
                 if (driveTargetReached && armElevReached && armExtReached) {
+                    stateMachine = StateMachine.ARM_UP_1_B;
+                }
+            }
+            else if (stateMachine == StateMachine.ARM_UP_1_B) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (armElevReached) {
                     stateMachine = StateMachine.RETRACT_ARM;
                 }
             }
@@ -181,7 +195,7 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
             // Next State: RELEASE_SPECIMEN
             //----------------------------------------------------------
             else if (stateMachine == StateMachine.RETRACT_ARM) {
-                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN);
+                arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN-400);
                 boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
 
                 // If target reached, move to next state to release specimen
@@ -196,7 +210,7 @@ public class Auto16760SLIGHTLYBETTER extends LinearOpMode {
             // Next State: RELEASE_SPECIMEN
             //----------------------------------------------------------
             else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
-                wrist.toggleClaw();
+                wrist.clawOpen();
                 sleep(500);
 
                 // Don't need to wait for claw to toggle
