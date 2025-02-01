@@ -39,7 +39,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
         DRIVE_TO_GP_2D,
         DRIVE_TO_OBSERVATION_ZONE,
 
-        ARM_UP_1_B_AGAIN, END
+        ARM_UP_1_B_AGAIN, ARMBACK, END
     }
 
     StateMachine stateMachine;
@@ -58,7 +58,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
     static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -25, -17, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
-    static final int ARM_ELEV_PICK_SAMPLE = -7000;
+    static final int ARM_ELEV_PICK_SAMPLE = -8000;
 
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7300;
 
@@ -173,7 +173,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-400);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
 
                 // If all three conditions are met, move to next state to retract the arm
@@ -190,6 +190,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
             else if (stateMachine == StateMachine.RETRACT_ARM) {
                 arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN-400);
                 boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {
@@ -210,7 +211,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
                 stateMachine = StateMachine.DRIVE_TO_OZ;
             }
             else if (stateMachine == StateMachine.DRIVE_TO_OZ) {
-                boolean drive = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, -5, 5, AngleUnit.DEGREES ,-90),0.4,0);
+                boolean drive = pinpoint.driveTo(new Pose2D(DistanceUnit.INCH, -3, 5, AngleUnit.DEGREES ,-90),0.4,0);
                 if (drive) {
                     stateMachine = StateMachine.PICK_SAMPLE;
                 }
@@ -225,7 +226,22 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
             else if (stateMachine == StateMachine.CLAMP) {
                 wrist.toggleClaw();
                 sleep(500);
-                stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE_AGAIN;
+                stateMachine = StateMachine.ARMBACK;
+            }
+            else if (stateMachine == StateMachine.ARMBACK) {
+                // In parallel:
+                // (a) drive to front of submersible
+                // (b) rotate arm to the specified position
+                // (c) extend arm to the specified position
+                // Move to next state only when all three operations complete
+
+                arm.setElevationTarget(0);
+                boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
+
+                // If all three conditions are met, move to next state to retract the arm
+                if (armElevReached) {
+                    stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE_AGAIN;
+                }
             }
             else if (stateMachine == StateMachine.DRIVE_TO_SUBMERSIBLE_AGAIN) {
                 // In parallel:
@@ -233,13 +249,13 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                wrist.toggleWrist();
+                wrist.wristUp();
                 boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
 //                if (driveTargetReached) {
 //                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
 //                }
 
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-400);
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
 
                 arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);

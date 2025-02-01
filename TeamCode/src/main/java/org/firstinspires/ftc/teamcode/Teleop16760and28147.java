@@ -81,6 +81,7 @@ public class Teleop16760and28147 extends LinearOpMode {
         // create subsystems
         Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
         WristSubsystem Wrist = new WristSubsystem(hardwareMap, telemetry);
+        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
@@ -148,6 +149,9 @@ public class Teleop16760and28147 extends LinearOpMode {
             boolean SUB = gamepad2.dpad_left;
             boolean OZ = gamepad2.dpad_right;
             double dumb = 13.9;
+            double armLength = Extension.getCurrentPosition();
+            double armAngle = Elevation.getCurrentPosition();
+
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.

@@ -179,7 +179,7 @@ public class Auto1676028147DELAYSTART extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-400);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
 
                 // If all three conditions are met, move to next state to retract the arm
