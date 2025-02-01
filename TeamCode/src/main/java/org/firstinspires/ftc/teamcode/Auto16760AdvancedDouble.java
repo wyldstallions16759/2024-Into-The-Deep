@@ -56,7 +56,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
-    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -25, -17, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -27.3, -20, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
     static final int ARM_ELEV_PICK_SAMPLE = -8000;
 
@@ -250,12 +250,12 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
                 wrist.wristUp();
-                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE2, DRIVE_SPEED, 0);
 //                if (driveTargetReached) {
 //                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
 //                }
 
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-400);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-900);
                 boolean armElevReached = arm.armDown(ARM_ELEVATION_POWER);
 
                 arm.setExtensionTarget(ARM_EXTEND_PLACE_SPECIMEN);
@@ -272,7 +272,7 @@ public class Auto16760AdvancedDouble extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-900);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
 
                 // If all three conditions are met, move to next state to retract the arm

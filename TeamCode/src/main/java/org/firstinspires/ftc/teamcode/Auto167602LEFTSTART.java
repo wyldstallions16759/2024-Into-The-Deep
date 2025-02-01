@@ -10,11 +10,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
 
-@Autonomous(name="28147 LEFT START")
+@Autonomous(name="16760- LEFT START")
 
 //@Disabled
 
-public class Auto1676028147LEFTSTART extends LinearOpMode {
+public class Auto167602LEFTSTART extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -141,8 +141,8 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
             //----------------------------------------------------------
             if (stateMachine == StateMachine.WAITING_FOR_START) {
                 wrist.wristDown();
-                wrist.clawOpen();
-                sleep(5000);
+                wrist.clawClose();
+
                 stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
             }
 
@@ -157,7 +157,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, 0.2, 0);
+                boolean driveTargetReached = pinpoint.driveTo(SUBMERSIBLE, DRIVE_SPEED, 0);
 //                if (driveTargetReached) {
 //                    stateMachine = StateMachine.DRIVE_TO_GP_1A;
 //                }
@@ -209,7 +209,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
             // Next State: RELEASE_SPECIMEN
             //----------------------------------------------------------
             else if (stateMachine == StateMachine.RELEASE_SPECIMEN) {
-                wrist.clawClose();
+                wrist.clawOpen();
                 sleep(500);
 
                 // Don't need to wait for claw to toggle

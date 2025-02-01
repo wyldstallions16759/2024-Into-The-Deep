@@ -7,12 +7,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.Pinpoint.DriveToPoint;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
-import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint2;
 
 
-@Autonomous(name="16760 28147 Official Auto")
+@Autonomous(name="16760 28147 Official")
 
 //@Disabled
 
@@ -25,20 +23,13 @@ public class Auto1676028147Official extends LinearOpMode {
         RETRACT_ARM,
         RELEASE_SPECIMEN,
         DRIVE_TO_GP_1A,
-        ARM_MIDDLE_SAMPLE,
-        CLAWGRAB_1,
-        ARM_UP_1_A,
-        DELIVER_SAMPLE,
-        ARM_DOWN,
-        DROP_SAMPLE,
-        RETREAT,
-        WAIT,
-        GO_BACK,
-        PICK_SPECIMEN,
-        ARM_UP_1_B,
-        DRIVE_TO_SUB_AGAIN,
+        PICK_SAMPLE,
+        CLAMP,
+        DRIVE_TO_SUBMERSIBLE_AGAIN,
         RETRACT_ARM_AGAIN,
         RELEASE_SPECIMEN_AGAIN,
+        ARM_UP_1_B,
+        DRIVE_TO_OZ,
         DRIVE_TO_GP_1B,
         DRIVE_TO_GP_1C,
         DRIVE_TO_GP_1D,
@@ -47,7 +38,8 @@ public class Auto1676028147Official extends LinearOpMode {
         DRIVE_TO_GP_2C,
         DRIVE_TO_GP_2D,
         DRIVE_TO_OBSERVATION_ZONE,
-        END
+
+        ARM_UP_1_B_AGAIN, ARMBACK, END
     }
 
     StateMachine stateMachine;
@@ -64,9 +56,9 @@ public class Auto1676028147Official extends LinearOpMode {
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
     static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
-    //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -48, 0, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE2 = new Pose2D(DistanceUnit.INCH, -27.3, -20, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
-    static final int ARM_ELEV_PICK_SAMPLE = -5500;
+    static final int ARM_ELEV_PICK_SAMPLE = -8000;
 
     static final int ARM_EXTEND_PLACE_SPECIMEN = 7300;
 
@@ -198,6 +190,7 @@ public class Auto1676028147Official extends LinearOpMode {
             else if (stateMachine == StateMachine.RETRACT_ARM) {
                 arm.setExtensionTarget(ARM_EXTEND_RELEASE_SPECIMEN-400);
                 boolean armExtReached = arm.armRetract(ARM_EXTENSION_POWER);
+
 
                 // If target reached, move to next state to release specimen
                 if (armExtReached) {

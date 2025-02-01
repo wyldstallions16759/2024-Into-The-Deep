@@ -10,11 +10,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
 
 
-@Autonomous(name="28147 LEFT START")
+@Autonomous(name="28147 oFFICIAL")
 
 //@Disabled
 
-public class Auto1676028147LEFTSTART extends LinearOpMode {
+public class Auto28147Official extends LinearOpMode {
 
     // Auto State Machine
     enum StateMachine {
@@ -61,7 +61,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
     //-----------------------------------------------------------
 
     // ----- State: DRIVE_TO_SUBMERSIBLE -----
-    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, 17, AngleUnit.DEGREES, 0);
+    static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -27.3, -17, AngleUnit.DEGREES, 0);
     //static final Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -48, 0, AngleUnit.DEGREES, 0);
     static final int ARM_ELEV_PLACE_SPECIMEN = -2000;
     static final int ARM_ELEV_PICK_SAMPLE = -5500;
@@ -76,16 +76,16 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
     // Only operation in this state is to toggle claw, so no need to wait for it to complete
 
     // ----- State: DRIVE_TO_GP_1A (backup robot, move right past submersible, turn 180)
-    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, -13, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSA = new Pose2D(DistanceUnit.INCH, -15, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1B (go forward)
-    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -56.5, -13, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSB = new Pose2D(DistanceUnit.INCH, -56.5, 13, AngleUnit.DEGREES, 0);
 
     // ----- State: DRIVE_TO_GP_1C (move right)
-    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -56.5, -6, AngleUnit.DEGREES, 0);
+    static final Pose2D GP1_POSC = new Pose2D(DistanceUnit.INCH, -56.5, 24, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
-    static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -4, 24, AngleUnit.DEGREES, 180);
+    static final Pose2D GP1_POSD = new Pose2D(DistanceUnit.INCH, -6, 24, AngleUnit.DEGREES, 180);
     static final Pose2D GP1_POS2C = new Pose2D(DistanceUnit.INCH, -56.5, 32, AngleUnit.DEGREES, 180);
 
     // ----- State: DRIVE_TO_GP_1D (push game piece to observation zone)
@@ -93,7 +93,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
 
     // ----- States: DRIVE_TO_
 
-    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -5, 34, AngleUnit.DEGREES, 180);
+    static final Pose2D OBSERVATION_ZONE = new Pose2D(DistanceUnit.INCH, -3, 34, AngleUnit.DEGREES, 180);
     static final Pose2D SAMPLE_DELIVERY = new Pose2D(DistanceUnit.INCH, -18, 34, AngleUnit.DEGREES, 180);
     //Leave OZ
     static final Pose2D RETREATED = new Pose2D(DistanceUnit.INCH, -25, 34, AngleUnit.DEGREES, 180);
@@ -142,7 +142,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
             if (stateMachine == StateMachine.WAITING_FOR_START) {
                 wrist.wristDown();
                 wrist.clawOpen();
-                sleep(5000);
+
                 stateMachine = StateMachine.DRIVE_TO_SUBMERSIBLE;
             }
 
@@ -179,7 +179,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
                 // (b) rotate arm to the specified position
                 // (c) extend arm to the specified position
                 // Move to next state only when all three operations complete
-                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-300);
+                arm.setElevationTarget(ARM_ELEV_PLACE_SPECIMEN-400);
                 boolean armElevReached = arm.armUp(ARM_ELEVATION_POWER);
 
                 // If all three conditions are met, move to next state to retract the arm
@@ -203,7 +203,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
                 }
             }
 
-            //----------------------------------------------------------
+            //------------------------------------------- ---------------
             // State: RELEASE_SPECIMEN
             // Actions: Open fingers to release specimen
             // Next State: RELEASE_SPECIMEN
@@ -240,7 +240,7 @@ public class Auto1676028147LEFTSTART extends LinearOpMode {
             else if (stateMachine == StateMachine.DRIVE_TO_GP_1C) {
                 boolean driveTargetReached = pinpoint.driveTo(GP1_POSC, 0.3, 0);
                 if (driveTargetReached) {
-                    stateMachine = StateMachine.END;
+                    stateMachine = StateMachine.DRIVE_TO_GP_1D;
                 }
             }
 
