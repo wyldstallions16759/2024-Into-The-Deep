@@ -15,14 +15,14 @@ public class Pinpoint {
     // Odometry pods x and y offsets - MUST BE FILLED IN
 //    final static double XOFFSET = mmPerInch * 4.25;
 //    final static double YOFFSET = mmPerInch * 4.0625;
-    final static double XOFFSET = mmPerInch * 5.2;
-    final static double YOFFSET = mmPerInch * 5.6;
+    final static double XOFFSET = mmPerInch * 6.6;
+    final static double YOFFSET = mmPerInch * 6.75;
 
 
     private GoBildaPinpointDriver odo;
     private DriveToPoint nav;
 
-    public Pinpoint(LinearOpMode opMode, HardwareMap hwMap, Telemetry telemetry) {
+    public Pinpoint(LinearOpMode opMode, HardwareMap hwMap, Telemetry telemetry, double driveP, double driveD,double driveAcceleration,double driveTolerance, double yawP, double yawD,double yawAcceleration,double yawTolerance) {
 
         // Initialize the Pinpoint
         initPinpoint(hwMap);
@@ -30,14 +30,14 @@ public class Pinpoint {
         // Initiaize DriveToPoint
         nav = new DriveToPoint(opMode);
         nav.initializeMotors();
-        nav.setXYCoefficients(0.01, 0, 2.0, INCH, 2);
-        nav.setYawCoefficients(1.2, 0 , 2.0, DEGREES, 6);
+        nav.setXYCoefficients(driveP, driveD, driveAcceleration, INCH, driveTolerance);
+        nav.setYawCoefficients(yawP, yawD , yawAcceleration, DEGREES, yawTolerance);
     }
 
     public void initPinpoint(HardwareMap hwMap) {
         odo = hwMap.get(GoBildaPinpointDriver.class, "odo");
         odo.setOffsets(XOFFSET, YOFFSET);
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED,
                 GoBildaPinpointDriver.EncoderDirection.FORWARD);
         odo.resetPosAndIMU();
@@ -49,6 +49,9 @@ public class Pinpoint {
     }
     public void update() {
         odo.update();
+    }
+    public void setFix(boolean fix) {
+        nav.setFix(fix);
     }
 
     public Pose2D getPose() {

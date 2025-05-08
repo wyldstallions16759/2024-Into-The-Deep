@@ -216,6 +216,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class DriveToPoint {
 
+    private boolean fix;
+
     private enum Direction {
         x,
         y,
@@ -336,7 +338,8 @@ public class DriveToPoint {
         aMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         return aMotor;
     }
-
+    public void setFix(boolean fix) {this.fix = fix;}
+    
 
     private double calculatePID(Pose2D currentPosition, Pose2D targetPosition, Direction direction) {
         if (direction == Direction.x) {
@@ -349,7 +352,12 @@ public class DriveToPoint {
         }
         if (direction == Direction.h) {
             //double hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
-            hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
+            if (fix) {
+                hError = Math.toRadians(getHeadingErrorInDegrees(targetPosition, currentPosition));
+            }
+            else {
+                hError = targetPosition.getHeading(AngleUnit.RADIANS) - currentPosition.getHeading(AngleUnit.RADIANS);
+            }
             return hPID.calculateAxisPID(hError, yawPGain, yawDGain, yawAccel, currentTime.time());
         }
         return 0;

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -40,24 +41,30 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Official TeleOp 2024", group="Linear OpMode")
+@Autonomous(name="MAZE PATH")
 //@Disabled
-public class Teleop16760and28147 extends LinearOpMode {
+public class MAZE extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
+    enum state {
+        teleop,
+        P1,
+        P2,
+        P3,
+        P4
+    }
+    state State;
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
-    private DcMotor Elevation = null;
-    private DcMotor Extension = null;
-    static final Pose2D TARGET = new Pose2D(DistanceUnit.INCH, 3, 13, AngleUnit.DEGREES, 90);
-    static Pose2D SUBMERSIBLE = new Pose2D(DistanceUnit.INCH, -29, 13.6, AngleUnit.DEGREES, 0);
-    static final Pose2D POINT2 = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 180);
-    static final Pose2D OBSERVATION = new Pose2D(DistanceUnit.INCH, 96, 0, AngleUnit.DEGREES, 90);
-    static final Pose2D POINT1 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
 
+    static final Pose2D T1 = new Pose2D(DistanceUnit.INCH, 13, 0, AngleUnit.DEGREES, 0);
+    static Pose2D T2 = new Pose2D(DistanceUnit.INCH, 13, -20, AngleUnit.DEGREES, 0);
+    static final Pose2D T3 = new Pose2D(DistanceUnit.INCH, 50, -20, AngleUnit.DEGREES, 0);
+    static final Pose2D T4 = new Pose2D(DistanceUnit.INCH, 50, -20, AngleUnit.DEGREES, 260);
+    static final Pose2D T5 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
 
 
 //    //private Servo LeftFinger = null;
@@ -70,16 +77,18 @@ public class Teleop16760and28147 extends LinearOpMode {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "frontLeft");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "backLeft");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "frontLeft");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "backLeft");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "frontRight");
         rightBackDrive = hardwareMap.get(DcMotor.class, "backRight");
-        Elevation  = hardwareMap.get(DcMotor.class, "Elevation");
-        Extension  = hardwareMap.get(DcMotor.class, "Extension");
+        State = state.P1;
+
 //        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
-        Pinpoint pinpoint = new Pinpoint(this, hardwareMap, telemetry);
+        Pinpoint PID1 = new Pinpoint(this, hardwareMap, telemetry,0.05,0,3.0,2,1.2,0,2.9,6);
+        Pinpoint PID2 = new Pinpoint(this, hardwareMap, telemetry,0.02,0,3.0,2,1.2,0,2.9,6);
+//
 //        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
 //        wristSubsystem = new WristSubsystem(hardwareMap, telemetry);
         // ########################################################################################
@@ -93,23 +102,18 @@ public class Teleop16760and28147 extends LinearOpMode {
         // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
         // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
 
-        Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 //        RightFinger.scaleRange(0.4,0.7);
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        Elevation.setDirection(DcMotor.Direction.FORWARD);
-        Extension.setDirection(DcMotor.Direction.FORWARD);
-//        RightFinger.setDirection(Servo.Direction.FORWARD);
+
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Elevation.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -123,7 +127,8 @@ public class Teleop16760and28147 extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
-            pinpoint.update();
+            PID1.update();
+            PID2.update();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
@@ -171,12 +176,40 @@ public class Teleop16760and28147 extends LinearOpMode {
                 leftBackPower /= max;
                 rightBackPower /= max;
             }
-            if (reset_encoders) {
-                Extension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                Elevation.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            if (State == state.P1) {
+                PID1.setFix(false);
+                boolean drive = PID1.driveTo(T1, 1, 0);
+                if (drive == true) {
+                    State = state.P2;
+                    PID1.setFix(true);
+                }
             }
+            if (State == state.P2) {
+                PID1.setFix(false);
+                boolean drive = PID1.driveTo(T2, 1, 0);
+                if (drive == true) {
+                    State = state.P3;
+                    PID1.setFix(true);
+                }
+            }
+            if (State == state.P3) {
+                PID1.setFix(false);
+                boolean drive = PID2.driveTo(T3, 1, 0);
+                if (drive == true) {
+                    State = state.P3;
+                    PID1.setFix(true);
+                }
+            }
+            if (State == state.P4) {
+                PID1.setFix(false);
+                boolean drive = PID2.driveTo(T4, 1, 0);
+                if (drive == true) {
+                    State = state.P4;
+                    PID1.setFix(true);
+                }
+            }
+
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -200,57 +233,24 @@ public class Teleop16760and28147 extends LinearOpMode {
             leftBackDrive.setPower(leftBackPower);
             rightBackDrive.setPower(rightBackPower);
 
-            if (up) {
-                Elevation.setPower(1);
-            } else if (down) {
-                Elevation.setPower(-1);
-            } else if (!onoroff_Specimen){
-                Elevation.setPower(0);
-            }
-            if (out) {
-                Extension.setPower(1);
-            } else if (in) {
-                Extension.setPower(-1);
-            } else if (!onoroff_Specimen){
-                Extension.setPower(0);
-            }
 
             // Wrist Subsystem calls:
 
-            if (claw_toggle>0.7 && !(oldClawButton>0.7)){
+            if (claw_toggle > 0.7 && !(oldClawButton > 0.7)) {
                 //wristSubsystem.toggleClaw();
             }
-            if (wrist_toggle && !oldWristButton){
+            if (wrist_toggle && !oldWristButton) {
                 //wristSubsystem.toggleWrist();
             }
-//            if (SUB) {
-//                SUBMERSIBLE = new Pose2D(DistanceUnit.INCH,-29 ,dumb += 2,AngleUnit.DEGREES,0);
-//                pinpoint.driveTo(SUBMERSIBLE,0.3,0);
-//            } else {
-//                leftFrontDrive.setPower(0);
-//                rightFrontDrive.setPower(0);
-//                leftBackDrive.setPower(0);
-//                rightBackDrive.setPower(0);
-//            }
-//            if (OZ) {
-//                pinpoint.driveTo(OBSERVATION,0.3,0);
-//            } else {
-//                leftFrontDrive.setPower(0);
-//                rightFrontDrive.setPower(0);
-//                leftBackDrive.setPower(0);
-//                rightBackDrive.setPower(0);
-//            }
+
             oldWristButton = wrist_toggle;
             oldClawButton = claw_toggle;
 
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Status", "Run Time: " + State);
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
-            telemetry.addData("Elevation Encoder: ", "%d", Elevation.getCurrentPosition());
-            telemetry.addData("Extension Encoder: ", "%d", Extension.getCurrentPosition());
-//            telemetry.addData("OdoX",());
-            Pose2D pose = pinpoint.getPose();
+            Pose2D pose = PID1.getPose();
             telemetry.addData("X: ", pose.getX(DistanceUnit.INCH));
             telemetry.addData("Y: ", pose.getY(DistanceUnit.INCH));
             telemetry.addData("Heading: ", pose.getHeading(AngleUnit.DEGREES));
@@ -259,87 +259,5 @@ public class Teleop16760and28147 extends LinearOpMode {
             telemetry.update();
         }
 //l
-    }
-    public boolean Extend (double inches, double speed) {
-
-        // Determine new target position. Use the current position of the LeftFrontDrive
-        int currentTarget = (int) (inches * (452.53 / (4 * 3.145)));
-
-        telemetry.addData("current pos: ", Extension.getCurrentPosition());
-
-        telemetry.addData("target pos:  ", currentTarget);
-        telemetry.update();
-        Extension.setTargetPosition(currentTarget);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-
-        // Turn On RUN_TO_POSITION
-        Extension.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Give power to motors
-        Extension.setPower(speed);
-
-
-
-        // If motors are still busy, haven't reached target
-//        if (LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy() &&
-//                LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy()) {
-//            return false;
-//        }
-
-
-        // Motors aren't busy so we've reached our destination
-        // Turn off RUN_TO_POSITION
-        Extension.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        return true;
-    }
-    public boolean Elevate (double inches, double speed) {
-
-        // Determine new target position. Use the current position of the LeftFrontDrive
-        int currentTarget = (int) (inches * (452.53 / (4 * 3.145)));
-
-        telemetry.addData("current pos: ", Elevation.getCurrentPosition());
-
-        telemetry.addData("target pos:  ", currentTarget);
-        telemetry.update();
-        Elevation.setTargetPosition(currentTarget);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-        //LeftFrontDrive.setTargetPosition(target);
-
-        // Turn On RUN_TO_POSITION
-        Elevation.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Give power to motors
-        Elevation.setPower(speed);
-
-
-
-        // If motors are still busy, haven't reached target
-//        if (LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy() &&
-//                LeftFrontDrive.isBusy() && LeftFrontDrive.isBusy()) {
-//            return false;
-//        }
-
-
-        // Motors aren't busy so we've reached our destination
-        // Turn off RUN_TO_POSITION
-        Elevation.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        return true;
     }
 }
