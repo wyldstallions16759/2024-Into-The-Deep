@@ -51,7 +51,7 @@ public class MAZE extends LinearOpMode {
         P1,
         P2,
         P3,
-        P4
+        P5, P4
     }
     state State;
     private ElapsedTime runtime = new ElapsedTime();
@@ -61,10 +61,10 @@ public class MAZE extends LinearOpMode {
     private DcMotor rightBackDrive = null;
 
     static final Pose2D T1 = new Pose2D(DistanceUnit.INCH, 13, 0, AngleUnit.DEGREES, 0);
-    static Pose2D T2 = new Pose2D(DistanceUnit.INCH, 13, -20, AngleUnit.DEGREES, 0);
-    static final Pose2D T3 = new Pose2D(DistanceUnit.INCH, 50, -20, AngleUnit.DEGREES, 0);
-    static final Pose2D T4 = new Pose2D(DistanceUnit.INCH, 50, -20, AngleUnit.DEGREES, 260);
-    static final Pose2D T5 = new Pose2D(DistanceUnit.INCH, 24, 48, AngleUnit.DEGREES, 90);
+    static Pose2D T2 = new Pose2D(DistanceUnit.INCH, 13, -18, AngleUnit.DEGREES, 0);
+    static final Pose2D T3 = new Pose2D(DistanceUnit.INCH, 50, -18, AngleUnit.DEGREES, 0);
+    static final Pose2D T4 = new Pose2D(DistanceUnit.INCH, 49, -5, AngleUnit.DEGREES, 0);
+    static final Pose2D T5 = new Pose2D(DistanceUnit.INCH, 70, -20, AngleUnit.DEGREES, 0);
 
 
 //    //private Servo LeftFinger = null;
@@ -86,7 +86,7 @@ public class MAZE extends LinearOpMode {
 //        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
         // create subsystems
-        Pinpoint PID1 = new Pinpoint(this, hardwareMap, telemetry,0.05,0,3.0,2,1.2,0,2.9,6);
+        Pinpoint PID1 = new Pinpoint(this, hardwareMap, telemetry,0.01,0,3.0,2,1.2,0,2.9,6);
         Pinpoint PID2 = new Pinpoint(this, hardwareMap, telemetry,0.02,0,3.0,2,1.2,0,2.9,6);
 //
 //        ArmSubsystem arm = new ArmSubsystem(hardwareMap,telemetry);
@@ -197,19 +197,26 @@ public class MAZE extends LinearOpMode {
                 PID1.setFix(false);
                 boolean drive = PID2.driveTo(T3, 1, 0);
                 if (drive == true) {
-                    State = state.P3;
+                    State = state.P4;
                     PID1.setFix(true);
                 }
             }
             if (State == state.P4) {
                 PID1.setFix(false);
-                boolean drive = PID2.driveTo(T4, 1, 0);
+                boolean drive = PID1.driveTo(T4, 1, 0);
                 if (drive == true) {
-                    State = state.P4;
+                    State = state.P5;
                     PID1.setFix(true);
                 }
             }
-
+            if (State == state.P5) {
+                PID1.setFix(true);
+                boolean drive = PID1.driveTo(T5, 0.3, 0);
+                if (drive == true) {
+                    State = state.P5;
+                    PID1.setFix(true);
+                }
+            }
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
