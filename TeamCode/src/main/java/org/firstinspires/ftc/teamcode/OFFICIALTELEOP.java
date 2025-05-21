@@ -41,19 +41,11 @@ import org.firstinspires.ftc.teamcode.Pinpoint.Pinpoint;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="MAZE PATH")
+@TeleOp(name="MAZE PATH",group = "LinearOpMode")
 //@Disabled
-public class MAZE extends LinearOpMode {
+public class OFFICIALTELEOP extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
-    enum state {
-        teleop,
-        P1,
-        P2,
-        P3,
-        P5, P4
-    }
-    state State;
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
@@ -81,7 +73,6 @@ public class MAZE extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "backLeft");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "frontRight");
         rightBackDrive = hardwareMap.get(DcMotor.class, "backRight");
-        State = state.P1;
 
 //        //LeftFinger = hardwareMap.get(Servo.class, "LeftFinger");
 //        RightFinger= hardwareMap.get(Servo.class, "RightFinger");
@@ -177,46 +168,7 @@ public class MAZE extends LinearOpMode {
                 rightBackPower /= max;
             }
 
-            if (State == state.P1) {
-                PID1.setFix(false);
-                boolean drive = PID1.driveTo(T1, 1, 0);
-                if (drive == true) {
-                    State = state.P2;
-                    PID1.setFix(true);
-                }
-            }
-            if (State == state.P2) {
-                PID1.setFix(false);
-                boolean drive = PID1.driveTo(T2, 1, 0);
-                if (drive == true) {
-                    State = state.P3;
-                    PID1.setFix(true);
-                }
-            }
-            if (State == state.P3) {
-                PID1.setFix(false);
-                boolean drive = PID2.driveTo(T3, 1, 0);
-                if (drive == true) {
-                    State = state.P4;
-                    PID1.setFix(true);
-                }
-            }
-            if (State == state.P4) {
-                PID1.setFix(false);
-                boolean drive = PID1.driveTo(T4, 1, 0);
-                if (drive == true) {
-                    State = state.P5;
-                    PID1.setFix(true);
-                }
-            }
-            if (State == state.P5) {
-                PID1.setFix(true);
-                boolean drive = PID1.driveTo(T5, 0.5, 0);
-                if (drive == true) {
-                    State = state.P5;
-                    PID1.setFix(true);
-                }
-            }
+
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -252,9 +204,6 @@ public class MAZE extends LinearOpMode {
 
             oldWristButton = wrist_toggle;
             oldClawButton = claw_toggle;
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + State);
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             Pose2D pose = PID1.getPose();
